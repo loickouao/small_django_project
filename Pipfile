@@ -40,6 +40,9 @@ virtualenv-clone = "==0.5.4"
 wrapt = "==1.12.1"
 zipp = "==3.1.0"
 Django = "==3.0.6"
+pytest = "*"
+factory-boy = "*"
+pytest-factoryboy = "*"
 
 [requires]
 python_version = "3.6"
