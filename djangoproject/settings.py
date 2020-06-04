@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from celery.schedules import crontab
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,8 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'small_django_rest_project',
-    #'celery',
+    'djangoapp',
+    'celery',
     'rest_framework',
 ]
 
@@ -121,3 +122,31 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_IMPORTS = ['djangoapp.tasks',]
+
+CELERY_BEAT_SCHEDULE = {
+    'run_parallel_get_global_quote': {
+        'task': 'djangoapp.tasks.run_parallel_get_global_quote',
+        'schedule': crontab(), # Execute every minute.
+        'options': {'queue' : 'celery_periodic'} ##options are mapped to apply_async options
+    },
+}
+
+"""
+
+"""
+
+CELERYBEAT_SCHEDULE = {
+   'installer_recalc_hour': {
+        'task': 'stats.installer.tasks.recalc_last_hour',
+        'schedule': 15  # every 15 sec for test
+    },
+}
+CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
