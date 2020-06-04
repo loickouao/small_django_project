@@ -1,4 +1,5 @@
 import factory
+
 from .models import Stock, Price
 
 class StockFactory(factory.DjangoModelFactory):
