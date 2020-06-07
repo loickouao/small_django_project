@@ -7,6 +7,7 @@ router = routers.DefaultRouter()
 router.register(r'stocks', views.StockViewSet)
 router.register(r'prices', views.PriceViewSet)
 
+
 urlpatterns = [
     path('', include(router.urls)),
 

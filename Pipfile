@@ -43,6 +43,8 @@ Django = "==3.0.6"
 pytest = "*"
 factory-boy = "*"
 pytest-factoryboy = "*"
+django-celery-beat = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.6"

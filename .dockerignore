@@ -1,2 +1,4 @@
 .git
 .dockerignore
+*.pyc
+**/__pycache__

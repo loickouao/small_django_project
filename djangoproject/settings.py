@@ -39,8 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'djangoapp',
-    'celery',
     'rest_framework',
+    'celery',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -135,18 +136,6 @@ CELERY_BEAT_SCHEDULE = {
     'run_parallel_get_global_quote': {
         'task': 'djangoapp.tasks.run_parallel_get_global_quote',
         'schedule': crontab(), # Execute every minute.
-        'options': {'queue' : 'celery_periodic'} ##options are mapped to apply_async options
+        #'options': {'queue' : 'celery_periodic'} ##options are mapped to apply_async options
     },
 }
-
-"""
-
-"""
-
-CELERYBEAT_SCHEDULE = {
-   'installer_recalc_hour': {
-        'task': 'stats.installer.tasks.recalc_last_hour',
-        'schedule': 15  # every 15 sec for test
-    },
-}
-CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
