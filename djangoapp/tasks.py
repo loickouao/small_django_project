@@ -2,8 +2,8 @@ from .models import Stock, Price
 import requests
 from celery import shared_task
 import time
-import os
 import threading
+from decouple import config
 
 print('task ok')
 #Stock.objects.all().delete()
@@ -11,8 +11,7 @@ print('task ok')
 
 start = time.time()
 
-@shared_task
-def get_global_quote(namestock, API_KEY = os.getenv('DO_ACCESS_APIKEY')):   
+def get_global_quote(namestock, API_KEY = config('DO_ACCESS_APIKEY')):   
     if not API_KEY:
         raise Exception("Couldn't find DO_ACCESS_APIKEY environment variable!")
  
@@ -51,11 +50,10 @@ def get_global_quote(namestock, API_KEY = os.getenv('DO_ACCESS_APIKEY')):
     #print("'%s\' fetched in %ss" % (namestock, (time.time() - start))) 
 
 
-@shared_task(name='run_parallel_get_global_quote') # name helps celery identify the functions it has to run
+@shared_task() # name helps celery identify the functions it has to run
 def run_parallel_get_global_quote():
     #stocks = ["IBM", "BABA", "BAC", "300135.SHZ"]
     stocks = Stock.objects.all()
-    print(stocks)
     threads = [threading.Thread(target=get_global_quote, args=(stock.symbol,)) for stock in stocks]
     for thread in threads:
         thread.start()
@@ -63,7 +61,7 @@ def run_parallel_get_global_quote():
         thread.join()
 
 #run_parallel_get_global_quote.delay()
-run_parallel_get_global_quote.apply_async()
+# run_parallel_get_global_quote.apply_async()
 
 
 

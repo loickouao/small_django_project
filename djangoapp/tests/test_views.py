@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from djangoapp.views import PriceViewSet, StockViewSet
 import pytest
+from django.utils import timezone
 from .factories import StockFactory, PriceFactory
 
 class Test_viewsets(APITestCase):
@@ -19,7 +20,8 @@ class Test_viewsets(APITestCase):
 
     def test_stock_IBM(self):
         stock = StockFactory(symbol='IBM')
-        price = PriceFactory(open_price=90.00, high_price=190.00, low_price=20.20, price=100.00, volume=40859, date="2020-06-03", stock = stock)
+        date = timezone.now()
+        price = PriceFactory(open_price=90.00, high_price=190.00, low_price=20.20, price=100.00, volume=40859, date=date, stock = stock)
 
         response = self.client.get(reverse('stock-list'), data={'symbol': stock.symbol})
         self.assertEqual(response.status_code, status.HTTP_200_OK)

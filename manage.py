@@ -2,12 +2,6 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-import dotenv
-
-#If you are using Django, you should add the above loader script at the top of wsgi.py and manage.py.
-dotenv.load_dotenv(
-    os.path.join(os.path.dirname(__file__), '.env')
-)
 
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'djangoproject.settings')

@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-from celery.schedules import crontab
+from decouple import config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,10 +24,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'uyk@fx=p_7m1p5j-c3=)cl(niqn8n5+vt(q!2%$1^9arw8=8=^'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True 
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -38,10 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'djangoapp',
     'rest_framework',
-    'celery',
     'django_celery_beat',
+
+    'djangoapp',
 ]
 
 MIDDLEWARE = [
@@ -103,8 +102,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -125,17 +122,20 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
-CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+#CELERY_BROKER_URL = "redis://localhost:6379"
+#CELERY_RESULT_BACKEND = "redis://localhost:6379"
+CELERY_BROKER_URL = "redis://redis"
+CELERY_RESULT_BACKEND = "redis://redis"
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_IMPORTS = ['djangoapp.tasks',]
 
-CELERY_BEAT_SCHEDULE = {
-    'run_parallel_get_global_quote': {
-        'task': 'djangoapp.tasks.run_parallel_get_global_quote',
-        'schedule': crontab(), # Execute every minute.
-        #'options': {'queue' : 'celery_periodic'} ##options are mapped to apply_async options
-    },
-}
+#from celery.schedules import crontab
+# CELERY_BEAT_SCHEDULE = {
+#     'run_parallel_get_global_quote': {
+#         'task': 'djangoapp.tasks.run_parallel_get_global_quote',
+#         'schedule': crontab(), # Execute every minute.
+#         #'options': {'queue' : 'celery_periodic'} ##options are mapped to apply_async options
+#     },
+# }

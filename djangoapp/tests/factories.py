@@ -1,15 +1,11 @@
 import factory
 
-from djangoapp.models import Stock, Price
-
 class StockFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = Stock
+        model = "djangoapp.Stock"
 
 class PriceFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = Price
+        model = "djangoapp.Price"
         
     stock = factory.SubFactory(StockFactory)
-
-

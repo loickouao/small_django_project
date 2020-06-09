@@ -1,16 +1,21 @@
 version: '3'
 
 services:
-  db:
+  postgres:
     image: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-  redis:
-    #image: "redis"
-    image: "redis:alpine"
-    command: redis-server
     ports:
-      - '6379:6379'
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    volumes:
+      #- postgres_data:/var/lib/postgresql/data/
+      - ~/DockerVolumes/postgres_djangoproject:/var/lib/postgresql/data/
+
+  redis:
+    image: redis
+    ports:
+    - "6379:6379"
   web:
     build: .
     command: bash -c "python /code/manage.py migrate --noinput && python /code/manage.py runserver 0.0.0.0:8000"
@@ -19,7 +24,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - postgres
       - redis
   celery:
     build: .
@@ -27,15 +32,15 @@ services:
     volumes:
       - .:/code
     depends_on:
-      - db
+      - postgres
       - redis
   celery-beat:
     build: .
-    command: celery -A djangoproject beat -l info
+    command: celery -A djangoproject beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/code
     depends_on:
-      - db
+      - postgres
       - redis
 
 volumes:

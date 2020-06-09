@@ -14,7 +14,7 @@ class Price(models.Model):
     low_price = models.FloatField() 
     price = models.FloatField() 
     volume = models.FloatField() 
-    date = models.DateTimeField()
+    date = models.DateTimeField(auto_now=True)
     stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='prices')
 
     def __str__(self):
