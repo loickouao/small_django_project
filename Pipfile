@@ -19,6 +19,19 @@ factory-boy = "*"
 django-bridger = "*"
 dj-database-url = "*"
 django-redis = "*"
+djangorestframework-simplejwt = "*"
+django-extensions = "*"
+django-cors-headers = "*"
+django-filter = "*"
+
+[scripts]
+test = "pytest"
+test_verbose = "pytest -v"
+test_full = "pytest --cache-clear"
+local = "python manage.py runserver 0.0.0.0:8000"
+celery = "celery -A djangoproject worker -l info -Ofair --concurrency=1 -E"
+start_db = "docker-compose up"
+psql = "docker exec -it small_django_project_postgres_1 psql"
 
 [requires]
 python_version = "3.8.2"

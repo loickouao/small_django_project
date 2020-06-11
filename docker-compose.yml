@@ -1,38 +1,25 @@
 version: '3'
 
 services:
-  postgres:
+  db:
     image: postgres
     ports:
-      - "5432:5432"
+    - 5432:5432
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-    volumes:
-      #- postgres_data:/var/lib/postgresql/data/
-      - ~/DockerVolumes/postgres_djangoproject:/var/lib/postgresql/data/
-
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST_AUTH_METHOD= "trust"
+    command: psql createdb postgres_djangoproject
   redis:
     image: redis
     ports:
     - "6379:6379"
-  web:
-    build: .
-    command: bash -c "python /code/manage.py migrate --noinput && python /code/manage.py runserver 0.0.0.0:8000"
-    volumes:
-      - .:/code
-    ports:
-      - "8000:8000"
-    depends_on:
-      - postgres
-      - redis
   celery:
     build: .
     command: celery -A djangoproject worker -l info
     volumes:
       - .:/code
     depends_on:
-      - postgres
       - redis
   celery-beat:
     build: .
@@ -40,7 +27,15 @@ services:
     volumes:
       - .:/code
     depends_on:
-      - postgres
+      - redis
+  web:
+    working_dir: /app
+    build: .
+    command: ls
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
       - redis
 
 volumes:

@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from bridger import viewsets
 from .serializers import PriceSerializer, StockSerializer
 from .models import Stock, Price
 

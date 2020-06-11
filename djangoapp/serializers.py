@@ -1,18 +1,18 @@
-from rest_framework import serializers
+from bridger import serializers as wb_serializers
 
 from .models import Stock
 from .models import Price
 
-class PriceSerializer(serializers.HyperlinkedModelSerializer):
+class PriceSerializer(wb_serializers.ModelSerializer):
     class Meta:
         model = Price
         fields = '__all__'
         depth = 1
 
 
-class StockSerializer(serializers.HyperlinkedModelSerializer):
-    prices = serializers.HyperlinkedRelatedField(many=True, read_only=True,
-                                                 view_name='price-detail')
+class StockSerializer(wb_serializers.ModelSerializer):
+    #prices = wb_serializers.HyperlinkedRelatedField(many=True, read_only=True,
+    #                                             view_name='price-detail')
     class Meta:
         model = Stock
         #fields = ['symbol', 'prices']

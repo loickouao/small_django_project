@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "734bcdd387d9ab48c5e970d2bf9ca9604fb7b477c157c50c9a192bfaeed21ac9"
+            "sha256": "b319ff9cac9babe63467b5dd7696af9431daeef1906b95527c9ae629df25151c"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -263,10 +263,10 @@
         },
         "django-bridger": {
             "hashes": [
-                "sha256:127d3236c3d6fc032a033bde149fefa702f035a4a105ff3461e7d4ea2b855f9c"
+                "sha256:390b89b778b94622723e8e523635eb5af32de60026c0cefd7cd14f911c8d8431"
             ],
             "index": "pypi",
-            "version": "==0.9.0"
+            "version": "==0.9.2"
         },
         "django-celery-beat": {
             "hashes": [
@@ -276,12 +276,28 @@
             "index": "pypi",
             "version": "==2.0.0"
         },
+        "django-cors-headers": {
+            "hashes": [
+                "sha256:48d267c10d11d8e17805bf896071c0a3e8efb6f79f6634a90e6faac4c2f8a1a0",
+                "sha256:73d654950b5f5e7e4f67c05183d2169d4f7518ceb87734eb0d68f9e43be59f1c"
+            ],
+            "index": "pypi",
+            "version": "==3.3.0"
+        },
+        "django-extensions": {
+            "hashes": [
+                "sha256:2f81b618ba4d1b0e58603e25012e5c74f88a4b706e0022a3b21f24f0322a6ce6",
+                "sha256:b19182d101a441fe001c5753553a901e2ef3ff60e8fbbe38881eb4a61fdd17c4"
+            ],
+            "index": "pypi",
+            "version": "==2.2.9"
+        },
         "django-filter": {
             "hashes": [
                 "sha256:11e63dd759835d9ba7a763926ffb2662cf8a6dcb4c7971a95064de34dbc7e5af",
                 "sha256:616848eab6fc50193a1b3730140c49b60c57a3eda1f7fc57fa8505ac156c6c75"
             ],
-            "markers": "python_version >= '3.5'",
+            "index": "pypi",
             "version": "==2.3.0"
         },
         "django-fsm": {
@@ -328,7 +344,7 @@
                 "sha256:288ee78618d906f26abf6282b639b8f1806ce1d9a7578897a125cf79c609f259",
                 "sha256:c315be70aa12a5f5790c0ab9acd426c3a58eebea65a77d0893248c5144a5080c"
             ],
-            "markers": "python_version >= '3.6' and python_version < '3.9'",
+            "index": "pypi",
             "version": "==4.4.0"
         },
         "factory-boy": {

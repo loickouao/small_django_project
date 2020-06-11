@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 from decouple import config
+from rest_framework.reverse import reverse
+from datetime import timedelta
+from dj_database_url import parse as db_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,15 +40,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "django_filters",
+    'bridger',
     'rest_framework',
+    "rest_framework.authtoken",
+    "django_extensions",
     'django_celery_beat',
-
+    "corsheaders",
     'djangoapp',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -53,8 +61,30 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'djangoproject.urls'
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer", "rest_framework.renderers.BrowsableAPIRenderer",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+        "bridger.permissions.RestAPIModelPermissions",
+    ),
+    "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S%z"
+    # 'DEFAULT_METADATA_CLASS': 'wbutils.metadata.WorkbenchMetaData'
+    # 'DEFAULT_METADATA_CLASS': 'drf_auto_endpoint.metadata.AutoMetadata'
+}
 
+CHANNEL_LAYERS = {
+    "default": {"BACKEND": "channels_redis.core.RedisChannelLayer", "CONFIG": {"hosts": [("127.0.0.1", 6379)]},},
+}
+
+JWT_AUTH = {"JWT_AUTH_COOKIE": "JWT"}
+
+ROOT_URLCONF = 'djangoproject.urls'
+CORS_ORIGIN_ALLOW_ALL = True
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -72,15 +102,36 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'djangoproject.wsgi.application'
+ASGI_APPLICATION = "djangoproject.routing.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
+# }
+
+"""
+DATABASES = {
+    'default': config(
+        'DATABASE_URL',
+        cast=db_url
+    )
+}
+"""
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres_djangoproject',
+        'USER': 'postgres',
+        'PASSWORD':'postgres',
+        'HOST': 'localhost',
+        'PORT': 5432,
     }
 }
 
@@ -119,7 +170,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
+MEDIA_URL = "/media/"
 
 
 #CELERY_BROKER_URL = "redis://localhost:6379"
@@ -139,3 +193,39 @@ CELERY_IMPORTS = ['djangoapp.tasks',]
 #         #'options': {'queue' : 'celery_periodic'} ##options are mapped to apply_async options
 #     },
 # }
+
+
+
+CDN_BASE_ENDPOINT_URL = config("CDN_BASE_ENDPOINT_URL")
+BASE_ENDPOINT_URL = config("BASE_ENDPOINT_URL")
+FRONTEND_VERSION = config("FRONTEND_VERSION")
+def auth_method(request):
+    return {
+        "type": "JWT",
+        "config": {
+            "token": reverse("authentication:token_obtain_pair", request=request),
+            "refresh": reverse("authentication:token_refresh", request=request),
+            "verify": reverse("authentication:token_verify", request=request),
+            "username_field_key": "name",
+            "username_field_label": "Name",
+        },
+    }
+BRIDGER_SETTINGS = {
+    "FRONTEND_CONTEXT": {
+    # MANDATORY
+        "CSS_URL": f'{CDN_BASE_ENDPOINT_URL}/css/main-{FRONTEND_VERSION.replace(".", "-")}.css',
+        "JS_URL": f'{CDN_BASE_ENDPOINT_URL}/js/main-{FRONTEND_VERSION.replace(".", "-")}.js',
+        "FAVICON_URL": f'{CDN_BASE_ENDPOINT_URL}/favicon.ico'
+    }
+}
+BRIDGER_URL = BASE_ENDPOINT_URL
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+}
