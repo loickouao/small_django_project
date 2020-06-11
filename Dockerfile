@@ -14,7 +14,10 @@ WORKDIR /app
 COPY Pipfile* /app/
 RUN pip install --upgrade pip
 RUN pip install pipenv
-RUN pipenv install --dev
+#RUN pipenv install --dev --system --deploy --ignore-pipfile
+RUN pipenv lock --requirements > requirements.txt
+RUN pip install -r requirements.txt
+
 
 # Copy project
 COPY . /app/
