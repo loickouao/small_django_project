@@ -50,6 +50,14 @@ INSTALLED_APPS = [
     'djangoapp',
 ]
 
+
+
+WB_ENDPOINTS = [
+    'djangoapp',
+]
+
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -115,14 +123,12 @@ ASGI_APPLICATION = "djangoproject.routing.application"
 #     }
 # }
 
-"""
-DATABASES = {
-    'default': config(
-        'DATABASE_URL',
-        cast=db_url
-    )
-}
-"""
+# DATABASES = {
+#     'default': config(
+#         'DATABASE_URL',
+#         cast=db_url
+#     )
+# }
 
 DATABASES = {
     'default': {

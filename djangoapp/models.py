@@ -8,6 +8,22 @@ class Stock(models.Model):
     def __str__(self):
         return self.symbol
 
+    class Meta:
+        verbose_name = "Stock"
+        verbose_name_plural = "Stocks"
+
+    @classmethod
+    def get_representation_endpoint(cls):
+        return "djangoapp:stockrepresentation-list"
+
+    @classmethod
+    def get_representation_value_key(cls):
+        return "id"
+
+    @classmethod
+    def get_representation_label_key(cls):
+        return "{{symbol}}"
+
 class Price(models.Model):
     open_price = models.FloatField() 
     high_price = models.FloatField() 
@@ -19,3 +35,19 @@ class Price(models.Model):
 
     def __str__(self):
         return str(self.price)
+
+    class Meta:
+        verbose_name = "Price"
+        verbose_name_plural = "Prices"
+
+    @classmethod
+    def get_representation_endpoint(cls):
+        return "djangoapp:pricerepresentation-list"
+
+    @classmethod
+    def get_representation_value_key(cls):
+        return "id"
+
+    @classmethod
+    def get_representation_label_key(cls):
+        return "{{price}}"

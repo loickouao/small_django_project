@@ -5,8 +5,14 @@ from . import views
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.BridgerRouter()
-router.register(r'stocks', views.StockViewSet)
-router.register(r'prices', views.PriceViewSet)
+
+router.register(r'stocks', views.StockModelViewSet)
+router.register(r'stockrepresentation', views.StockRepresentationModelViewSet, basename='stockrepresentation')
+
+
+router.register(r'prices', views.PriceModelViewSet)
+router.register(r'pricerepresentation', views.PriceRepresentationModelViewSet, basename='pricerepresentation')
+router.register(r'pricelist', views.PriceListModelViewSet, basename='pricelist')
 
 
 urlpatterns = [
