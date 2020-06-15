@@ -15,7 +15,13 @@ router.register(r'pricerepresentation', views.PriceRepresentationModelViewSet, b
 router.register(r'pricelist', views.PriceListModelViewSet, basename='pricelist')
 
 
+# Subrouter for the Price of a stock 
+price_router = routers.BridgerRouter()
+price_router.register(r'prices', views.PriceStockModelViewSet, basename='stock-prices')
+
+
 urlpatterns = [
     path('', include(router.urls)),
+    path('stocks/<int:stock_id>/', include(price_router.urls)),
 
 ]

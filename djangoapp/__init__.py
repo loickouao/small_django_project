@@ -8,11 +8,17 @@ djangoapp_menu = Menu(
             label="Stocks", 
             endpoint="djangoapp:stock-list",
             add=MenuItem(label="New Stock", endpoint="djangoapp:stock-list"),
+            permission=ItemPermission(
+                method=lambda request: request.user.is_staff
+            )
         ),
         MenuItem(
             label="Prices", 
             endpoint="djangoapp:pricelist-list",
             add=MenuItem(label="New Price", endpoint="djangoapp:price-list"),
+            permission=ItemPermission(
+                method=lambda request: request.user.is_staff
+            )
         ),
     ]
 )

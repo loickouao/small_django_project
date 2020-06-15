@@ -3,23 +3,38 @@ from .serializers import (PriceModelSerializer, StockModelSerializer,
     StockRepresentationModelSerializer,
     PriceRepresentationModelSerializer
 )
+from bridger.filters import DjangoFilterBackend
+from bridger import buttons as bt
+from bridger import display as dp
+from bridger.enums import RequestType
+from bridger import serializers as wb_serializers
+
 from rest_framework import filters, status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from django.conf import settings
 from django.urls.exceptions import NoReverseMatch
+from django.db.models import F
+
+from .icons import WBIcon
 
 from .models import Stock, Price
 
-from bridger import display as dp
 
 # ViewSets define the view behavior.
 
 class StockRepresentationModelViewSet(viewsets.RepresentationModelViewSet):
     queryset = Stock.objects.all()
     serializer_class = StockRepresentationModelSerializer
+
+
+
+class MultiplyPricesActionButtonSerializer(wb_serializers.Serializer):
+        number_product = wb_serializers.FloatField(label="Multiply by", default=2)
+        class Meta:
+            fields = ["number_product"]
 
 
 class StockModelViewSet(viewsets.ModelViewSet):
@@ -30,28 +45,81 @@ class StockModelViewSet(viewsets.ModelViewSet):
     CREATE_TITLE = "New Stock"
 
     LIST_DISPLAY = dp.ListDisplay(
-        fields=[
-            dp.Field(key="symbol", label="Symbol")
+        fields = [
+            dp.Field(key = "symbol", label = "Symbol")
         ],
     )
 
     INSTANCE_DISPLAY = dp.InstanceDisplay(
-        sections=[
+        sections = [
             dp.Section(
-                fields=dp.FieldSet(
-                    fields=["symbol"]
+                fields = dp.FieldSet(
+                    fields = ["symbol"]
                 )
-            )
+            ),
+            dp.Section(title="Prices", collapsed=True, section_list = dp.SectionList(key = "prices")),
         ]
     )
+
+    
+
+
+    CUSTOM_LIST_INSTANCE_BUTTONS = CUSTOM_INSTANCE_BUTTONS = [
+        bt.DropDownButton(label="Quick Action", icon = WBIcon.TRIANGLE_DOWN.value, buttons = [
+
+            bt.WidgetButton(key = "prices", label = "Prices", icon = WBIcon.DOLLAR.value),
+            
+            bt.ActionButton(
+                method = RequestType.PATCH,
+                identifiers = ["djangoapp:stock-prices"],
+                action_label = "loic",
+                key = "prices",
+                title = "Multiply the Prices of a stock",
+                label = "Multiply Prices",
+                icon = WBIcon.CIRCLE_NO.value,
+                description_fields = "<p> Do you want to multiply the prices of {{symbol}}? </p>",
+                serializer = MultiplyPricesActionButtonSerializer,
+                confirm_config = bt.ButtonConfig(label = "Confirm"),
+                cancel_config = bt.ButtonConfig(label = "Cancel"),
+                instance_display = dp.InstanceDisplay(
+                    sections=[
+                        dp.Section(
+                            fields = dp.FieldSet(fields = ["number_product"])
+                        )
+                    ]
+                )
+            ),
+        ])
+    ]
+
+    # @action(methods = ["GET", "PATCH"], detail=True)
+    # def prices(self, request, pk=None):
+    #     # if pk:
+    #     number_product = int(request.POST.get("number_product", 1))
+
+    #     #Price.objects.filter(stock__id=pk).update(price=F('price') * number_product)
+
+
+    #     return Response(
+    #         {"__notification": {"symbol": "Prices modified."}}, status = status.HTTP_200_OK
+    #     )
+
 
     queryset = Stock.objects.all()
     serializer_class = StockModelSerializer
 
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter,]
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
     ordering_fields = ['symbol']
     ordering = ['symbol']
     search_fields = ("symbol",)
+    filter_fields = {
+        "symbol": ["exact", "icontains"]
+    }
+
+    def get_aggregates(self, queryset, **kwargs):
+        return {
+            "symbol": {"#": format_number(queryset.count())},
+        }
 
 
 class PriceRepresentationModelViewSet(viewsets.RepresentationModelViewSet):
@@ -87,14 +155,24 @@ class PriceModelViewSet(viewsets.ModelViewSet):
     queryset = Price.objects.all()
     serializer_class = PriceModelSerializer    
 
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter,]
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
     ordering_fields = ['stock', 'price', 'date']
-    ordering = ['date']
-    search_fields = ["stock", "price", "date"]
+    ordering = ['date', 'stock']
+    search_fields = ["stock", "price"]
+    filter_fields = {
+        "stock": ["exact"],
+        "price": ["exact", "icontains"],
+        "date": ["gte", "lte"]
+    }
+
+    def get_aggregates(self, queryset, **kwargs):
+        return {
+            "stock": {"#": format_number(queryset.count())},
+        }
+
 
 
 class PriceListModelViewSet(PriceModelViewSet):
-    IDENTIFIER = 'djangoapp:price'
     LIST_DISPLAY = dp.ListDisplay(
         fields=[
             dp.Field(key="stock", label="Symbol"),
@@ -103,6 +181,30 @@ class PriceListModelViewSet(PriceModelViewSet):
         ],  
     )
 
+
+
+class PriceStockModelViewSet(PriceListModelViewSet):
+    LIST_DISPLAY = dp.ListDisplay(
+        fields=[
+            dp.Field(key="price", label="Price"),
+            dp.Field(key="date", label="date"),
+        ],  
+    )
+    
+    def get_list_title(self, request, field=None):
+        stock = Stock.objects.get(id=self.kwargs["stock_id"])
+        return f'Prices for {stock.symbol}'
+
+    def get_queryset(self):
+        return super().get_queryset().filter(stock__id=self.kwargs["stock_id"])
+
+
+
+    
+
+def format_number(number, is_pourcent=False, decimal=2):
+    number = number if number else 0
+    return f'{number:,.{decimal}{"%" if is_pourcent else "f"}}'
 
 
 @api_view(["GET"])
