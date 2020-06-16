@@ -94,18 +94,18 @@ class StockModelViewSet(viewsets.ModelViewSet):
     ]
 
     @action(methods = ["GET", "PATCH"], permission_classes = [IsAuthenticated], detail=True)
-    def modifyprices(self, request, pk=None):
+    def modifyprices(self, request, pk = None):
         number_product = float(request.POST.get("number_product", 1))
         nbprice = Price.objects.filter(stock__id=pk).update(price=F('price') * number_product)
-        stock = Stock.objects.get(pk=pk)
-        print("Stock: "+str(stock)+" -> nb of price: "+str(nbprice))
+        stock = Stock.objects.get(pk = pk)
+        print("Stock: " +str(stock)+ " -> nb of price: " + str(nbprice))
         if nbprice > 0 :
-            print("Stock: "+str(stock)+" -> successful modify stock -> price multiplied by "+str(number_product)) 
+            print("Stock: " + str(stock) + " -> successful modify stock -> price multiplied by " + str(number_product)) 
             Notification.objects.create(
-                title= f'Stock: {stock.symbol} Modify Prices',
-                message=f'successful You have multiplied the prices of stock: {stock.symbol} -> price multiplied by ({number_product})',
-                send_type=NotificationSendType.SYSTEM.value,
-                recipient=request.user
+                title = f'Stock: {stock.symbol} Modify Prices',
+                message = f'successful You have multiplied the prices of stock: {stock.symbol} -> price multiplied by ({number_product})',
+                send_type = NotificationSendType.SYSTEM.value,
+                recipient = request.user
             )
         return Response(
             {"__notification": {stock.symbol: "successful modify stock", "number_product":number_product}}, status=status.HTTP_200_OK

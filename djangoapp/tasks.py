@@ -5,6 +5,9 @@ import time
 import threading
 from decouple import config
 from bridger.notifications.models import Notification, NotificationSendType
+from django.contrib.auth import get_user_model
+from rest_framework.reverse import reverse
+from django.conf import settings
 
 print('task ok')
 #Stock.objects.all().delete()
@@ -24,17 +27,19 @@ def get_global_quote(namestock, API_KEY = config('DO_ACCESS_APIKEY')):
     if DB :
         querystock = Stock.objects.all().filter(symbol = namestock)
         if querystock:
-            print(namestock+": Stock already exists in the database")
+            response_stock = "Stock already exists in the database"
             insertstock = querystock[0]
         else:
             insertstock = Stock(symbol = DB.get("01. symbol"))
             insertstock.save()
-            print(namestock+ ": New Stock added to the database")              
+            response_stock = "New Stock added to the database"
+        print(namestock+": "+ response_stock)
+     
 
         datetrading = DB.get('07. latest trading day')
         dateprice = Price.objects.all().filter(date = datetrading, stock = insertstock)
         if dateprice:
-            print(datetrading+ ": Price already added")
+            response_price = "Price already added"
         else:
             insertprice = Price(open_price = DB.get('02. open'),
             high_price = DB.get('03. high'),
@@ -44,9 +49,25 @@ def get_global_quote(namestock, API_KEY = config('DO_ACCESS_APIKEY')):
             date = DB.get('07. latest trading day'))
             insertprice.stock = insertstock
             insertprice.save()
-            print(datetrading+ ": New Price added to the database")              
+            response_price = "New Price added to the database"
+        print(datetrading+": "+ response_price)              
+
+        msg = f'{namestock}": {response_stock} \n {datetrading}": {response_price} '
     else:
-        print(DB, data.get('Note')) 
+        note = DB + data.get('Note')
+        print(note) 
+        msg = f'{note}'
+
+    users = get_user_model().objects.all()
+
+    for user in users:
+        Notification.objects.create(
+            title = f'get_global_quote Stock: {namestock}',
+            message = msg,
+            send_type = NotificationSendType.SYSTEM.value,
+            recipient = user,
+            endpoint = reverse("djangoapp:stock-detail", args=[insertstock.pk])
+        )
 
     #print("'%s\' fetched in %ss" % (namestock, (time.time() - start))) 
 
@@ -61,16 +82,5 @@ def run_parallel_get_global_quote():
     for thread in threads:
         thread.join()
 
-    # Notification.objects.create(
-    #     title = "Notification task prices for each stock",
-    #     message = "You have a new notification",
-    #     recipient = user,
-    #     send_type = NotificationSendType.SYSTEM_AND_MAIL.value,
-    #     endpoint = get_full_widget_url(reverse("crm:activity-detail", args = [activity.id]))
-    # )
-
 #run_parallel_get_global_quote.delay()
 # run_parallel_get_global_quote.apply_async()
-
-
-
