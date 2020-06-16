@@ -71,13 +71,12 @@ class StockModelViewSet(viewsets.ModelViewSet):
             
             bt.ActionButton(
                 method = RequestType.PATCH,
-                identifiers = ["djangoapp:stock-prices"],
-                action_label = "loic",
-                key = "prices",
-                title = "Multiply the Prices of a stock",
-                label = "Multiply Prices",
+                action_label = "Modify Prices",
+                key = "modifyprices",
+                title = "Modify the Prices of a stock",
+                label = "Modify Prices",
                 icon = WBIcon.CIRCLE_NO.value,
-                description_fields = "<p> Do you want to multiply the prices of {{symbol}}? </p>",
+                description_fields = "<p> Do you want to modify the prices of {{symbol}}? </p>",
                 serializer = MultiplyPricesActionButtonSerializer,
                 confirm_config = bt.ButtonConfig(label = "Confirm"),
                 cancel_config = bt.ButtonConfig(label = "Cancel"),
@@ -92,17 +91,16 @@ class StockModelViewSet(viewsets.ModelViewSet):
         ])
     ]
 
-    # @action(methods = ["GET", "PATCH"], detail=True)
-    # def prices(self, request, pk=None):
-    #     # if pk:
-    #     number_product = int(request.POST.get("number_product", 1))
+    @action(methods = ["PATCH"], detail=True)
+    def modifyprices(self, request, pk=None):
 
-    #     #Price.objects.filter(stock__id=pk).update(price=F('price') * number_product)
+        number_product = int(request.GET.get("number_product", 1))
+        print(number_product)
+        Price.objects.filter(stock__id=pk).update(price=F('price') * number_product)
 
-
-    #     return Response(
-    #         {"__notification": {"symbol": "Prices modified."}}, status = status.HTTP_200_OK
-    #     )
+        return Response(
+            True
+        )
 
 
     queryset = Stock.objects.all()
