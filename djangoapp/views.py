@@ -71,6 +71,7 @@ class StockModelViewSet(viewsets.ModelViewSet):
             
             bt.ActionButton(
                 method = RequestType.PATCH,
+                identifiers=["djangoapp:price"],
                 action_label = "Modify Prices",
                 key = "modifyprices",
                 title = "Modify the Prices of a stock",
@@ -91,15 +92,13 @@ class StockModelViewSet(viewsets.ModelViewSet):
         ])
     ]
 
-    @action(methods = ["PATCH"], detail=True)
+    @action(methods = ["GET", "PATCH"], detail=True)
     def modifyprices(self, request, pk=None):
-
-        number_product = int(request.GET.get("number_product", 1))
-        print(number_product)
+        number_product = float(request.POST.get("number_product", 1))
         Price.objects.filter(stock__id=pk).update(price=F('price') * number_product)
 
         return Response(
-            True
+            {"__notification": {"symbol": "Price modifiy."}}, status=status.HTTP_200_OK
         )
 
 

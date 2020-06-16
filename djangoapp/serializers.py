@@ -38,7 +38,7 @@ class StockModelSerializer(wb_serializers.ModelSerializer):
             request=request,
         )
         additional_resources["modifyprices"] = reverse(
-            "djangoapp:stock-prices-list",
+            "djangoapp:stock-modifyprices",
             args=[instance.id],
             request=request,
         )
