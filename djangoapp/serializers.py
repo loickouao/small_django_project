@@ -42,6 +42,11 @@ class StockModelSerializer(wb_serializers.ModelSerializer):
             args=[instance.id],
             request=request,
         )
+        additional_resources["chartprices"] = reverse(
+            "djangoapp:stock-chartprices-list",
+            args=[instance.id],
+            request=request,
+        )
         return additional_resources
 
 class PriceModelSerializer(wb_serializers.ModelSerializer):

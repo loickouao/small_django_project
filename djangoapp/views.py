@@ -9,6 +9,7 @@ from bridger import display as dp
 from bridger.enums import RequestType
 from bridger import serializers as wb_serializers
 from bridger.notifications.models import Notification, NotificationSendType
+from bridger.viewsets import ChartViewSet
 
 from rest_framework import filters, status
 from rest_framework.decorators import api_view, permission_classes, action
@@ -18,6 +19,10 @@ from rest_framework.reverse import reverse
 from django.conf import settings
 from django.urls.exceptions import NoReverseMatch
 from django.db.models import F
+
+import pandas as pd
+
+import plotly.graph_objects as go
 
 from .icons import WBIcon
 
@@ -62,9 +67,6 @@ class StockModelViewSet(viewsets.ModelViewSet):
         ]
     )
 
-    
-
-
     CUSTOM_LIST_INSTANCE_BUTTONS = CUSTOM_INSTANCE_BUTTONS = [
         bt.DropDownButton(label="Quick Action", icon = WBIcon.TRIANGLE_DOWN.value, buttons = [
 
@@ -72,7 +74,7 @@ class StockModelViewSet(viewsets.ModelViewSet):
             
             bt.ActionButton(
                 method = RequestType.PATCH,
-                identifiers=["djangoapp:price"],
+                identifiers = ["djangoapp:price"],
                 action_label = "Modify Prices",
                 key = "modifyprices",
                 title = "Modify the Prices of a stock",
@@ -90,6 +92,12 @@ class StockModelViewSet(viewsets.ModelViewSet):
                     ]
                 )
             ),
+
+            bt.WidgetButton(key = "chartprices", label = "Prices Chart", icon = WBIcon.STATS.value),
+
+            bt.HyperlinkButton(endpoint = "https://www.alphavantage.co/", label = "AlphaVantage", icon = WBIcon.BANK.value),
+
+
         ])
     ]
 
@@ -184,7 +192,7 @@ class PriceListModelViewSet(PriceModelViewSet):
         fields=[
             dp.Field(key="stock", label="Symbol"),
             dp.Field(key="price", label="Price"),
-            dp.Field(key="date", label="date"),
+            dp.Field(key="date", label="Date"),
         ],  
     )
 
@@ -194,7 +202,7 @@ class PriceStockModelViewSet(PriceListModelViewSet):
     LIST_DISPLAY = dp.ListDisplay(
         fields=[
             dp.Field(key="price", label="Price"),
-            dp.Field(key="date", label="date"),
+            dp.Field(key="date", label="Date"),
         ],  
     )
     
@@ -204,6 +212,71 @@ class PriceStockModelViewSet(PriceListModelViewSet):
 
     def get_queryset(self):
         return super().get_queryset().filter(stock__id=self.kwargs["stock_id"])
+
+
+
+class PriceStockChartViewSet(ChartViewSet):
+    IDENTIFIER = 'djangoapp:price' 
+    queryset = Price.objects.all()
+    
+    LIST_TITLE = "Model Chart"
+
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    ordering_fields = ['date']
+    ordering = ['date']
+    filter_fields = {
+        "date": ["gte", "lte"]
+    }
+
+    def get_queryset(self):
+        return Price.objects.all().filter(stock__id=self.kwargs["stock_id"])
+
+    def get_list_title(self, request, field=None):
+        stock = Stock.objects.get(id=self.kwargs["stock_id"])
+        return f'Model Chart - Prices for {stock.symbol}'
+
+    def get_plotly(self, queryset):
+        df = pd.DataFrame(
+            queryset.order_by("date").values("date", "price")
+        )
+        fig = go.Figure(
+            [
+                go.Scatter(
+                    x = df.date,
+                    y = df.price,  # fill='tozeroy',
+                    #line = dict(width=1),
+                )
+            ]
+        )
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            yaxis=dict(
+                title="Prices",
+                titlefont=dict(color="#000000"),
+                tickfont=dict(color="#000000"),
+                anchor="x",
+                side="right",
+                showline=True,
+                linewidth=1,
+                linecolor="black",
+            ),
+            yaxis_type="log",
+            xaxis=dict(
+                title="Date",
+                titlefont=dict(color="#000000"),
+                tickfont=dict(color="#000000"),
+                showline=True,
+                linewidth=0.5,
+                linecolor="black",
+                showgrid=True,
+                gridcolor="lightgray",
+                gridwidth=1,
+            ),
+            autosize=True,
+            xaxis_rangeslider_visible=True,
+        )
+        return fig
 
 
 
