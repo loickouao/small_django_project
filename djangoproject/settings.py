@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "django_filters",
     'bridger',
+    "channels",
     'rest_framework',
     "rest_framework.authtoken",
     "django_extensions",
@@ -85,8 +86,19 @@ REST_FRAMEWORK = {
     # 'DEFAULT_METADATA_CLASS': 'drf_auto_endpoint.metadata.AutoMetadata'
 }
 
+# CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}   # config from django-brider
+
+# CHANNEL_LAYERS = {
+#     "default": {"BACKEND": "channels_redis.core.RedisChannelLayer", "CONFIG": {"hosts": [("127.0.0.1", 6379)]},},
+# }
+
 CHANNEL_LAYERS = {
-    "default": {"BACKEND": "channels_redis.core.RedisChannelLayer", "CONFIG": {"hosts": [("127.0.0.1", 6379)]},},
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [config('REDIS_URL', default='redis://')],
+        },
+    },
 }
 
 JWT_AUTH = {"JWT_AUTH_COOKIE": "JWT"}
@@ -123,23 +135,23 @@ ASGI_APPLICATION = "djangoproject.routing.application"
 #     }
 # }
 
-# DATABASES = {
-#     'default': config(
-#         'DATABASE_URL',
-#         cast=db_url
-#     )
-# }
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres_djangoproject',
-        'USER': 'root',
-        'PASSWORD':'root',
-        'HOST': 'postgres',
-        'PORT': 5432,
-    }
+    'default': config(
+        'DATABASE_URL',
+        cast=db_url
+    )
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres_djangoproject',
+#         'USER': 'root',
+#         'PASSWORD':'root',
+#         'HOST': 'postgres',
+#         'PORT': 5432,
+#     }
+# }
 
 
 # Password validation
@@ -182,10 +194,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
 MEDIA_URL = "/media/"
 
 
-# CELERY_BROKER_URL = "redis://localhost:6379"
-# CELERY_RESULT_BACKEND = "redis://localhost:6379"
-CELERY_BROKER_URL = "redis://redis"
-CELERY_RESULT_BACKEND = "redis://redis"
+# CELERY_BROKER_URL = "redis://localhost:6379" or  "redis://redis" for docker
+# CELERY_RESULT_BACKEND = "redis://localhost:6379" or  "redis://redis" for docker
+CELERY_BROKER_URL = config('REDIS_URL', default='redis://')
+CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://')
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

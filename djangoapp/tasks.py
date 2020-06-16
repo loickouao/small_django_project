@@ -4,6 +4,7 @@ from celery import shared_task
 import time
 import threading
 from decouple import config
+from bridger.notifications.models import Notification, NotificationSendType
 
 print('task ok')
 #Stock.objects.all().delete()
@@ -43,7 +44,7 @@ def get_global_quote(namestock, API_KEY = config('DO_ACCESS_APIKEY')):
             date = DB.get('07. latest trading day'))
             insertprice.stock = insertstock
             insertprice.save()
-            print(datetrading, ": New Price added to the database")              
+            print(datetrading+ ": New Price added to the database")              
     else:
         print(DB, data.get('Note')) 
 
@@ -59,6 +60,14 @@ def run_parallel_get_global_quote():
         thread.start()
     for thread in threads:
         thread.join()
+
+    # Notification.objects.create(
+    #     title = "Notification task prices for each stock",
+    #     message = "You have a new notification",
+    #     recipient = user,
+    #     send_type = NotificationSendType.SYSTEM_AND_MAIL.value,
+    #     endpoint = get_full_widget_url(reverse("crm:activity-detail", args = [activity.id]))
+    # )
 
 #run_parallel_get_global_quote.delay()
 # run_parallel_get_global_quote.apply_async()

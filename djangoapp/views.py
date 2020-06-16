@@ -8,6 +8,7 @@ from bridger import buttons as bt
 from bridger import display as dp
 from bridger.enums import RequestType
 from bridger import serializers as wb_serializers
+from bridger.notifications.models import Notification, NotificationSendType
 
 from rest_framework import filters, status
 from rest_framework.decorators import api_view, permission_classes, action
@@ -92,13 +93,22 @@ class StockModelViewSet(viewsets.ModelViewSet):
         ])
     ]
 
-    @action(methods = ["GET", "PATCH"], detail=True)
+    @action(methods = ["GET", "PATCH"], permission_classes = [IsAuthenticated], detail=True)
     def modifyprices(self, request, pk=None):
         number_product = float(request.POST.get("number_product", 1))
-        Price.objects.filter(stock__id=pk).update(price=F('price') * number_product)
-
+        nbprice = Price.objects.filter(stock__id=pk).update(price=F('price') * number_product)
+        stock = Stock.objects.get(pk=pk)
+        print("Stock: "+str(stock)+" -> nb of price: "+str(nbprice))
+        if nbprice > 0 :
+            print("Stock: "+str(stock)+" -> successful modify stock -> price multiplied by "+str(number_product)) 
+            Notification.objects.create(
+                title= f'Stock: {stock.symbol} Modify Prices',
+                message=f'successful You have multiplied the prices of stock: {stock.symbol} -> price multiplied by ({number_product})',
+                send_type=NotificationSendType.SYSTEM.value,
+                recipient=request.user
+            )
         return Response(
-            {"__notification": {"symbol": "Price modifiy."}}, status=status.HTTP_200_OK
+            {"__notification": {stock.symbol: "successful modify stock", "number_product":number_product}}, status=status.HTTP_200_OK
         )
 
 
