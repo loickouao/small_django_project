@@ -10,6 +10,10 @@ from bridger.enums import RequestType
 from bridger import serializers as wb_serializers
 from bridger.notifications.models import Notification, NotificationSendType
 from bridger.viewsets import ChartViewSet
+from bridger import serializers as wb_serializers
+from bridger.pandas.views import PandasAPIView
+from bridger.pandas.metadata import PandasMetadata
+from bridger.pandas import fields as pf
 
 from rest_framework import filters, status
 from rest_framework.decorators import api_view, permission_classes, action
@@ -158,7 +162,7 @@ class PriceModelViewSet(viewsets.ModelViewSet):
                 fields=dp.FieldSet(
                     fields=[
                         dp.FieldSet(fields=["stock"]),
-                        dp.FieldSet(fields=["price", "date"]),
+                        dp.FieldSet(fields=["price", "date", "datetime"]),
                         dp.FieldSet(fields=["open_price", "high_price", "low_price"]),
                         dp.FieldSet(fields=["volume"]),
                     ]
@@ -171,13 +175,14 @@ class PriceModelViewSet(viewsets.ModelViewSet):
     serializer_class = PriceModelSerializer    
 
     filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
-    ordering_fields = ['stock', 'price', 'date']
-    ordering = ['date', 'stock']
+    ordering_fields = ['stock', 'price', 'date', 'datetime']
+    ordering = ['datetime', 'stock']
     search_fields = ["stock", "price"]
     filter_fields = {
         "stock": ["exact"],
         "price": ["exact", "icontains"],
-        "date": ["gte", "lte"]
+        "date": ["gte", "lte"],
+        "datetime": ["gte", "lte"]
     }
 
     def get_aggregates(self, queryset, **kwargs):
@@ -185,24 +190,79 @@ class PriceModelViewSet(viewsets.ModelViewSet):
             "stock": {"#": format_number(queryset.count())},
         }
 
+    def get_serializer_changes(self, serializer):
+        pk = self.kwargs.get("pk", None)
+        if hasattr(serializer, "fields") and pk :
+            #if getattr(self.)
+            serializer.fields["price"] = wb_serializers.FloatField(read_only=True)
+        return serializer
 
-
+    
 class PriceListModelViewSet(PriceModelViewSet):
     LIST_DISPLAY = dp.ListDisplay(
         fields=[
             dp.Field(key="stock", label="Symbol"),
             dp.Field(key="price", label="Price"),
             dp.Field(key="date", label="Date"),
+            dp.Field(key="datetime", label="Datetime"),
         ],  
     )
 
 
+
+class PricePandasModelViewSet(PandasAPIView):
+    #ENDPOINT = 'djangoapp:price-list'
+    ENDPOINT = None
+    IDENTIFIER = 'djangoapp:price' 
+    #LIST_ENDPOINT = 'djangoapp:pricelist-list'
+    metadata_class = PandasMetadata
+
+    LIST_TITLE = 'Pandas Prices'
+
+    LIST_DISPLAY = dp.ListDisplay(
+        fields=[
+            dp.Field(key="stock", label="Symbol"),
+            dp.Field(key="price", label="Price"),
+            dp.Field(key="date", label="Date"),
+            dp.Field(key="datetime", label="Datetime"),
+        ],  
+    )
+
+    pandas_fields = pf.PandasFields(
+        fields=[
+            pf.PKField(key="id", label="ID"),
+            pf.CharField(key="stock", label="stock"),
+            pf.FloatField(key="price", label="Price", precision=2, percent=False),
+            pf.CharField(key="date", label="Date"),
+            pf.CharField(key="datetime", label="Datetime"),
+        ]
+    )
+
+    queryset = Price.objects.all()
+    serializer_class = PriceModelSerializer 
+
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
+    ordering_fields = ['stock', 'price', 'date', 'datetime']
+    ordering = ['datetime', 'stock']
+    search_fields = ["stock", "price"]
+    filter_fields = {
+        "stock": ["exact"],
+        "price": ["exact", "icontains"],
+        "date": ["gte", "lte"],
+        "datetime": ["gte", "lte"]
+    }
+
+    def get_aggregates(self, request, df):
+        return {
+            "stock": {"#": format_number(df.shape[0])},
+        }
 
 class PriceStockModelViewSet(PriceListModelViewSet):
     LIST_DISPLAY = dp.ListDisplay(
         fields=[
             dp.Field(key="price", label="Price"),
             dp.Field(key="date", label="Date"),
+            dp.Field(key="datetime", label="Datetime"),
         ],  
     )
     
@@ -222,10 +282,10 @@ class PriceStockChartViewSet(ChartViewSet):
     LIST_TITLE = "Model Chart"
 
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
-    ordering_fields = ['date']
-    ordering = ['date']
+    ordering_fields = ['datetime']
+    ordering = ['datetime']
     filter_fields = {
-        "date": ["gte", "lte"]
+        "datetime": ["gte", "lte"]
     }
 
     def get_queryset(self):
@@ -237,13 +297,15 @@ class PriceStockChartViewSet(ChartViewSet):
 
     def get_plotly(self, queryset):
         df = pd.DataFrame(
-            queryset.order_by("date").values("date", "price")
+            queryset.order_by("datetime").values("datetime", "price")
         )
         fig = go.Figure(
             [
                 go.Scatter(
-                    x = df.date,
-                    y = df.price,  # fill='tozeroy',
+                    x = df.datetime,
+                    y = df.price,  
+                    #mode='lines+markers',
+                    #fill='tozeroy',
                     #line = dict(width=1),
                 )
             ]
@@ -263,7 +325,7 @@ class PriceStockChartViewSet(ChartViewSet):
             ),
             yaxis_type="log",
             xaxis=dict(
-                title="Date",
+                title="Datetime",
                 titlefont=dict(color="#000000"),
                 tickfont=dict(color="#000000"),
                 showline=True,
@@ -280,7 +342,13 @@ class PriceStockChartViewSet(ChartViewSet):
 
 
 
-    
+class StatStockModelViewSet(viewsets.ModelViewSet):
+    ENDPOINT = 'djangoapp:stock-list'
+    IDENTIFIER = "djangoapp:stock"
+    INSTANCE_TITLE = "Stock : {{symbol}}"
+    LIST_TITLE = "Stocks"
+    CREATE_TITLE = "New Stock"
+
 
 def format_number(number, is_pourcent=False, decimal=2):
     number = number if number else 0

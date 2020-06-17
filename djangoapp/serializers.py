@@ -18,16 +18,16 @@ class PriceRepresentationModelSerializer(wb_serializers.RepresentationSerializer
 
     class Meta:
         model = Price
-        fields = ('id', 'price', 'date', '_detail')
+        fields = ('id', 'price', 'datetime', '_detail')
 
 
 
 class StockModelSerializer(wb_serializers.ModelSerializer):
-    #_prices = PriceRepresentationModelSerializer(many=True, source='prices')
     class Meta:
         model = Stock
         #fields = ['symbol', 'prices']
-        fields = '__all__' # all model fields will be included
+        #fields = '__all__' # all model fields will be included
+        fields = ('id', 'symbol', 'prices', '_additional_resources')
 
     @wb_serializers.register_resource()
     def additional_resources(self, instance, request, user):
@@ -51,9 +51,19 @@ class StockModelSerializer(wb_serializers.ModelSerializer):
 
 class PriceModelSerializer(wb_serializers.ModelSerializer):
     _stock = StockRepresentationModelSerializer(source="stock")
-
     class Meta:
         model = Price
-        fields = '__all__'
+        fields = (
+            'id',
+            "open_price",
+            "high_price",
+            "low_price",
+            "price",
+            "volume",
+            "date",
+            "datetime",
+            "stock",
+            "_stock"
+        )
         #depth = 1
 

@@ -24,13 +24,18 @@ class Stock(models.Model):
     def get_representation_label_key(cls):
         return "{{symbol}}"
 
+
+    # @classmethod
+    # def 
+
 class Price(models.Model):
-    open_price = models.FloatField() 
-    high_price = models.FloatField() 
-    low_price = models.FloatField() 
-    price = models.FloatField() 
-    volume = models.FloatField() 
-    date = models.DateTimeField(auto_now=True)
+    open_price = models.FloatField(null=False, blank=False) 
+    high_price = models.FloatField(null=False, blank=False) 
+    low_price = models.FloatField(null=False, blank=False) 
+    price = models.FloatField(null=False, blank=False) 
+    volume = models.FloatField(null=False, blank=False) 
+    date = models.DateField(auto_now=True)
+    datetime = models.DateTimeField(auto_now=True)
     stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='prices')
 
     def __str__(self):
