@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F, OuterRef, Count, Subquery, IntegerField
 
 # Create your models here.
 class Stock(models.Model):
@@ -25,8 +26,21 @@ class Stock(models.Model):
         return "{{symbol}}"
 
 
-    # @classmethod
-    # def 
+    @classmethod
+    def get_nb_prices_stock_date(cls, date=None):
+        myprices = Price.objects.filter(
+            stock__pk = OuterRef('pk'),
+            date__gte = date,
+        )     
+        return Subquery(
+            myprices.values("stock__pk").annotate(count=Count("stock__pk"))
+            .values("count")[:1]
+            )
+
+
+        
+
+
 
 class Price(models.Model):
     open_price = models.FloatField(null=False, blank=False) 

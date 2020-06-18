@@ -4,22 +4,17 @@ from rest_framework.reverse import reverse
 from .models import Stock, Price
 
 class StockRepresentationModelSerializer(wb_serializers.RepresentationSerializer):
-
     _detail = wb_serializers.HyperlinkField(reverse_name="djangoapp:stock-detail")
-
     class Meta:
         model = Stock
         fields = ('id', 'symbol', '_detail')
 
 
 class PriceRepresentationModelSerializer(wb_serializers.RepresentationSerializer):
-
     _detail = wb_serializers.HyperlinkField(reverse_name="djangoapp:price-detail")
-
     class Meta:
         model = Price
         fields = ('id', 'price', 'datetime', '_detail')
-
 
 
 class StockModelSerializer(wb_serializers.ModelSerializer):
@@ -49,6 +44,7 @@ class StockModelSerializer(wb_serializers.ModelSerializer):
         )
         return additional_resources
 
+
 class PriceModelSerializer(wb_serializers.ModelSerializer):
     _stock = StockRepresentationModelSerializer(source="stock")
     class Meta:
@@ -67,3 +63,12 @@ class PriceModelSerializer(wb_serializers.ModelSerializer):
         )
         #depth = 1
 
+
+class NbPriceStockModelSerializer(wb_serializers.ModelSerializer):
+    #_prices = PriceRepresentationModelSerializer(many=True, source="prices")
+    nb_prices = wb_serializers.IntegerField()
+    nb_prices_today = wb_serializers.IntegerField()
+    class Meta:
+        model = Stock
+        #fields = ('id',"symbol", "prices", "_prices",  "nb_prices", "nb_prices_today")
+        fields = ('id',"symbol", "nb_prices", "nb_prices_today")

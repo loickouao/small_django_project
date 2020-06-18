@@ -14,22 +14,22 @@ djangoapp_menu = Menu(
         ),
         MenuItem(
             label = "Prices", 
-            endpoint = "djangoapp:pricelist-list",
+            endpoint = "djangoapp:price-list",
             add = MenuItem(label="New Price", endpoint = "djangoapp:price-list"),
             permission = ItemPermission(
                 method = lambda request: request.user.is_staff
             )
         ),
         MenuItem(
-            label = "PricesPandas", 
+            label = "Prices Pandas", 
             endpoint = "djangoapp:pandasprice",
             permission = ItemPermission(
                 method = lambda request: request.user.is_staff
             )
         ),
         MenuItem(
-            label = "Stats Stocks",
-            endpoint = "djangoapp:statstock",
+            label = "NB Prices Stocks",
+            endpoint = "djangoapp:nbpricestock-list",
             permission = ItemPermission(
                 method = lambda request: request.user.is_staff
             )

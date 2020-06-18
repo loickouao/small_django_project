@@ -1,7 +1,8 @@
 from bridger import viewsets
 from .serializers import (PriceModelSerializer, StockModelSerializer,
     StockRepresentationModelSerializer,
-    PriceRepresentationModelSerializer
+    PriceRepresentationModelSerializer,
+    NbPriceStockModelSerializer
 )
 from bridger.filters import DjangoFilterBackend
 from bridger import buttons as bt
@@ -22,7 +23,9 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from django.conf import settings
 from django.urls.exceptions import NoReverseMatch
-from django.db.models import F
+from django.db.models import F, Count, Sum, Subquery
+
+from django.utils import timezone
 
 import pandas as pd
 
@@ -31,14 +34,11 @@ import plotly.graph_objects as go
 from .icons import WBIcon
 
 from .models import Stock, Price
-
-
-# ViewSets define the view behavior.
+from datetime import timedelta
 
 class StockRepresentationModelViewSet(viewsets.RepresentationModelViewSet):
     queryset = Stock.objects.all()
     serializer_class = StockRepresentationModelSerializer
-
 
 
 class MultiplyPricesActionButtonSerializer(wb_serializers.Serializer):
@@ -150,7 +150,6 @@ class PriceModelViewSet(viewsets.ModelViewSet):
 
     ENDPOINT = 'djangoapp:price-list'
     IDENTIFIER = 'djangoapp:price' 
-    LIST_ENDPOINT = 'djangoapp:pricelist-list'
     INSTANCE_TITLE = "Price : {{price}} / Stock :  {{_stock.symbol}}"
     LIST_TITLE = "Prices"
     CREATE_TITLE = "New Price"
@@ -169,6 +168,15 @@ class PriceModelViewSet(viewsets.ModelViewSet):
                 )
             )
         ]
+    )
+
+    LIST_DISPLAY = dp.ListDisplay(
+        fields=[
+            dp.Field(key="stock", label="Symbol"),
+            dp.Field(key="price", label="Price"),
+            dp.Field(key="date", label="Date"),
+            dp.Field(key="datetime", label="Datetime"),
+        ],  
     )
 
     queryset = Price.objects.all()
@@ -197,67 +205,8 @@ class PriceModelViewSet(viewsets.ModelViewSet):
             serializer.fields["price"] = wb_serializers.FloatField(read_only=True)
         return serializer
 
-    
-class PriceListModelViewSet(PriceModelViewSet):
-    LIST_DISPLAY = dp.ListDisplay(
-        fields=[
-            dp.Field(key="stock", label="Symbol"),
-            dp.Field(key="price", label="Price"),
-            dp.Field(key="date", label="Date"),
-            dp.Field(key="datetime", label="Datetime"),
-        ],  
-    )
 
-
-
-class PricePandasModelViewSet(PandasAPIView):
-    #ENDPOINT = 'djangoapp:price-list'
-    ENDPOINT = None
-    IDENTIFIER = 'djangoapp:price' 
-    #LIST_ENDPOINT = 'djangoapp:pricelist-list'
-    metadata_class = PandasMetadata
-
-    LIST_TITLE = 'Pandas Prices'
-
-    LIST_DISPLAY = dp.ListDisplay(
-        fields=[
-            dp.Field(key="stock", label="Symbol"),
-            dp.Field(key="price", label="Price"),
-            dp.Field(key="date", label="Date"),
-            dp.Field(key="datetime", label="Datetime"),
-        ],  
-    )
-
-    pandas_fields = pf.PandasFields(
-        fields=[
-            pf.PKField(key="id", label="ID"),
-            pf.CharField(key="stock", label="stock"),
-            pf.FloatField(key="price", label="Price", precision=2, percent=False),
-            pf.CharField(key="date", label="Date"),
-            pf.CharField(key="datetime", label="Datetime"),
-        ]
-    )
-
-    queryset = Price.objects.all()
-    serializer_class = PriceModelSerializer 
-
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
-    ordering_fields = ['stock', 'price', 'date', 'datetime']
-    ordering = ['datetime', 'stock']
-    search_fields = ["stock", "price"]
-    filter_fields = {
-        "stock": ["exact"],
-        "price": ["exact", "icontains"],
-        "date": ["gte", "lte"],
-        "datetime": ["gte", "lte"]
-    }
-
-    def get_aggregates(self, request, df):
-        return {
-            "stock": {"#": format_number(df.shape[0])},
-        }
-
-class PriceStockModelViewSet(PriceListModelViewSet):
+class PriceStockModelViewSet(PriceModelViewSet):
     LIST_DISPLAY = dp.ListDisplay(
         fields=[
             dp.Field(key="price", label="Price"),
@@ -272,7 +221,6 @@ class PriceStockModelViewSet(PriceListModelViewSet):
 
     def get_queryset(self):
         return super().get_queryset().filter(stock__id=self.kwargs["stock_id"])
-
 
 
 class PriceStockChartViewSet(ChartViewSet):
@@ -341,13 +289,113 @@ class PriceStockChartViewSet(ChartViewSet):
         return fig
 
 
+class PricePandasModelViewSet(PandasAPIView):
+    #ENDPOINT = 'djangoapp:price-list'
+    ENDPOINT = None
+    IDENTIFIER = 'djangoapp:price' 
+    #LIST_ENDPOINT = 'djangoapp:pricelist-list'
+    metadata_class = PandasMetadata
 
-class StatStockModelViewSet(viewsets.ModelViewSet):
-    ENDPOINT = 'djangoapp:stock-list'
-    IDENTIFIER = "djangoapp:stock"
-    INSTANCE_TITLE = "Stock : {{symbol}}"
-    LIST_TITLE = "Stocks"
-    CREATE_TITLE = "New Stock"
+    LIST_TITLE = 'Pandas Prices'
+
+    LIST_DISPLAY = dp.ListDisplay(
+        fields=[
+            dp.Field(key="stock", label="Symbol"),
+            dp.Field(key="price", label="Price"),
+            dp.Field(key="date", label="Date"),
+            dp.Field(key="datetime", label="Datetime"),
+        ],  
+    )
+
+    pandas_fields = pf.PandasFields(
+        fields=[
+            pf.PKField(key="id", label="ID"),
+            pf.CharField(key="stock", label="stock"),
+            pf.FloatField(key="price", label="Price", precision=2, percent=False),
+            pf.CharField(key="date", label="Date"),
+            pf.CharField(key="datetime", label="Datetime"),
+        ]
+    )
+
+    queryset = Price.objects.all()
+    serializer_class = PriceModelSerializer 
+
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
+    ordering_fields = ['stock', 'price', 'date', 'datetime']
+    ordering = ['datetime', 'stock']
+    search_fields = ["stock", "price"]
+    filter_fields = {
+        "stock": ["exact"],
+        "price": ["exact", "icontains"],
+        "date": ["gte", "lte"],
+        "datetime": ["gte", "lte"]
+    }
+
+    def get_aggregates(self, request, df):
+        return {
+            "stock": {"#": format_number(df.shape[0])},
+        }
+
+
+class NbPriceStockModelViewSet(viewsets.ModelViewSet):
+    ENDPOINT = 'djangoapp:price-list'
+    IDENTIFIER = 'djangoapp:price' 
+    INSTANCE_ENDPOINT = 'djangoapp:stock-list'
+    LIST_TITLE = "Nb Stocks"
+    
+    queryset = Stock.objects.all()
+    serializer_class = NbPriceStockModelSerializer 
+
+    LIST_DISPLAY = dp.ListDisplay(
+        fields=[
+            dp.Field(key="symbol", label="Symbol"),
+            dp.Field(key="nb_prices", label="Total Prices"),
+            dp.Field(key="nb_prices_today", label="Total Prices today"),
+        ],  
+    )
+
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter, DjangoFilterBackend]
+    ordering_fields = ['symbol']
+    ordering = ['symbol']
+    search_fields = ("symbol",)
+    filter_fields = {
+        "symbol": ["exact", "icontains"]
+    }
+
+    def get_queryset(self):
+        date = timezone.now().date() - timedelta(days=1)
+        today = timezone.now().date()
+        return Stock.objects.annotate(
+            nb_prices = Count(F("prices")),
+            nb_prices_today = Stock.get_nb_prices_stock_date(today)
+        )
+
+    def get_aggregates(self, queryset, **kwargs):
+        return {
+            "symbol": {"#": format_number(queryset.count())},
+            "nb_prices": {"#": queryset.aggregate(s=Sum(F("nb_prices")))["s"]},
+            "nb_prices_today": {"#": queryset.aggregate(s=Sum(F("nb_prices_today")))["s"]}
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def format_number(number, is_pourcent=False, decimal=2):
