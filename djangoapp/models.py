@@ -47,7 +47,7 @@ class Price(models.Model):
     high_price = models.FloatField(null=False, blank=False) 
     low_price = models.FloatField(null=False, blank=False) 
     price = models.FloatField(null=False, blank=False) 
-    volume = models.FloatField(null=False, blank=False) 
+    volume = models.IntegerField(null=False, blank=False) 
     date = models.DateField(auto_now=True)
     datetime = models.DateTimeField(auto_now=True)
     stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='prices')
