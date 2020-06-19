@@ -3,7 +3,6 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework.response import Response
 from rest_framework import status
-from djangoapp.views import PriceViewSet, StockViewSet
 import pytest
 from django.utils import timezone
 from .factories import StockFactory, PriceFactory

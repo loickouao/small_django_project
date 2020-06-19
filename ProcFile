@@ -1,4 +1,0 @@
-celery-bg: celery -A djangoproject worker -l info -Ofair --concurrency=1 -E -Q celery --hostname=general@%h
-celery-beat: celery -A djangoproject beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-
-

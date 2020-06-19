@@ -1,7 +1,7 @@
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 from rest_framework import status
-from djangoapp.serializers import PriceSerializer, StockSerializer
+from djangoapp.serializers import PriceModelSerializer, StockModelSerializer
 from django.urls import reverse
 import pytest
 import json
@@ -17,7 +17,7 @@ def test_create_stock_with_valid_data(client, stock_factory):
 
     context = {'request': Request(request)}
 
-    stock_serializer = StockSerializer(stock, context=context)
+    stock_serializer = StockModelSerializer(stock, context=context)
 
     data = {
         'url': stock_serializer.data.get('url'),
@@ -41,7 +41,7 @@ def test_create_price_for_stock(client, stock_factory, price_factory):
 
     context = {'request': Request(request)}
 
-    price_serializer = PriceSerializer(price, context=context)
+    price_serializer = PriceModelSerializer(price, context=context)
 
     """
     data = {
