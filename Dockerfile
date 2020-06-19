@@ -18,7 +18,5 @@ RUN pip install pipenv
 RUN pipenv lock --requirements > requirements.txt
 RUN pip install -r requirements.txt
 
-
 # Copy project
 COPY . /app/
-
