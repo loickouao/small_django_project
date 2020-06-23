@@ -32,11 +32,11 @@ class Stock(models.Model):
             stock__pk = OuterRef('pk'),
             date__gte = date,
         )     
-        return Subquery(
+        nb_prices_today = Subquery(
             myprices.values("stock__pk").annotate(count=Count("stock__pk"))
             .values("count")[:1]
             )
-
+        return nb_prices_today
 
         
 

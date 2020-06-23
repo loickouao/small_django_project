@@ -65,10 +65,10 @@ class PriceModelSerializer(wb_serializers.ModelSerializer):
 
 
 class NbPriceStockModelSerializer(wb_serializers.ModelSerializer):
-    #_prices = PriceRepresentationModelSerializer(many=True, source="prices")
-    nb_prices = wb_serializers.IntegerField()
-    nb_prices_today = wb_serializers.IntegerField()
+    _prices = PriceRepresentationModelSerializer(many=True, source="prices")
+    nb_prices = wb_serializers.IntegerField(allow_null=True)
+    nb_prices_today = wb_serializers.IntegerField(allow_null=True)
     class Meta:
         model = Stock
-        #fields = ('id',"symbol", "prices", "_prices",  "nb_prices", "nb_prices_today")
-        fields = ('id',"symbol", "nb_prices", "nb_prices_today")
+        fields = ('id',"symbol", "prices", "_prices",  "nb_prices", "nb_prices_today")
+        #fields = ('id', "symbol", "nb_prices", "nb_prices_today")

@@ -26,6 +26,7 @@ from django.urls.exceptions import NoReverseMatch
 from django.db.models import F, Count, Sum, Subquery
 
 from django.utils import timezone
+from django.db.models.functions import Coalesce    
 
 import pandas as pd
 
@@ -367,7 +368,7 @@ class NbPriceStockModelViewSet(viewsets.ModelViewSet):
         today = timezone.now().date()
         return Stock.objects.annotate(
             nb_prices = Count(F("prices")),
-            nb_prices_today = Stock.get_nb_prices_stock_date(today)
+            nb_prices_today = Coalesce(Stock.get_nb_prices_stock_date(today), 0)
         )
 
     def get_aggregates(self, queryset, **kwargs):
