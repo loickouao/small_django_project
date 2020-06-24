@@ -2,7 +2,8 @@ from bridger import viewsets
 from .serializers import (PriceModelSerializer, StockModelSerializer,
     StockRepresentationModelSerializer,
     PriceRepresentationModelSerializer,
-    NbPriceStockModelSerializer
+    NbPriceStockModelSerializer,
+    MultiplyPricesActionButtonSerializer
 )
 from bridger.filters import DjangoFilterBackend
 from bridger import buttons as bt
@@ -40,12 +41,6 @@ from datetime import timedelta
 class StockRepresentationModelViewSet(viewsets.RepresentationModelViewSet):
     queryset = Stock.objects.all()
     serializer_class = StockRepresentationModelSerializer
-
-
-class MultiplyPricesActionButtonSerializer(wb_serializers.Serializer):
-        number_product = wb_serializers.FloatField(label="Multiply by", default=2)
-        class Meta:
-            fields = ["number_product"]
 
 
 class StockModelViewSet(viewsets.ModelViewSet):
@@ -111,9 +106,9 @@ class StockModelViewSet(viewsets.ModelViewSet):
         number_product = float(request.POST.get("number_product", 1))
         nbprice = Price.objects.filter(stock__id=pk).update(price=F('price') * number_product)
         stock = Stock.objects.get(pk = pk)
-        print("Stock: " +str(stock)+ " -> nb of price: " + str(nbprice))
+        #print("Stock: " +str(stock)+ " -> nb of price: " + str(nbprice))
         if nbprice > 0 :
-            print("Stock: " + str(stock) + " -> successful modify stock -> price multiplied by " + str(number_product)) 
+            #print("Stock: " + str(stock) + " -> successful modify stock -> price multiplied by " + str(number_product)) 
             Notification.objects.create(
                 title = f'Stock: {stock.symbol} Modify Prices',
                 message = f'successful You have multiplied the prices of stock: {stock.symbol} -> price multiplied by ({number_product})',
@@ -121,7 +116,7 @@ class StockModelViewSet(viewsets.ModelViewSet):
                 recipient = request.user
             )
         return Response(
-            {"__notification": {stock.symbol: "successful modify stock", "number_product":number_product}}, status=status.HTTP_200_OK
+            {"__notification": {stock.symbol: "successful modify stock", 'updated': True, "number_product":number_product}}, status=status.HTTP_200_OK
         )
 
 
@@ -132,7 +127,7 @@ class StockModelViewSet(viewsets.ModelViewSet):
     ordering_fields = ['symbol']
     ordering = ['symbol']
     search_fields = ("symbol",)
-    filter_fields = {
+    filterset_fields = {
         "symbol": ["exact", "icontains"]
     }
 
@@ -187,7 +182,7 @@ class PriceModelViewSet(viewsets.ModelViewSet):
     ordering_fields = ['stock', 'price', 'date', 'datetime']
     ordering = ['datetime', 'stock']
     search_fields = ["stock", "price"]
-    filter_fields = {
+    filterset_fields = {
         "stock": ["exact"],
         "price": ["exact", "icontains"],
         "date": ["gte", "lte"],
@@ -233,7 +228,7 @@ class PriceStockChartViewSet(ChartViewSet):
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['datetime']
     ordering = ['datetime']
-    filter_fields = {
+    filterset_fields = {
         "datetime": ["gte", "lte"]
     }
 
@@ -325,7 +320,7 @@ class PricePandasModelViewSet(PandasAPIView):
     ordering_fields = ['stock', 'price', 'date', 'datetime']
     ordering = ['datetime', 'stock']
     search_fields = ["stock", "price"]
-    filter_fields = {
+    filterset_fields = {
         "stock": ["exact"],
         "price": ["exact", "icontains"],
         "date": ["gte", "lte"],
@@ -359,7 +354,7 @@ class NbPriceStockModelViewSet(viewsets.ModelViewSet):
     ordering_fields = ['symbol']
     ordering = ['symbol']
     search_fields = ("symbol",)
-    filter_fields = {
+    filterset_fields = {
         "symbol": ["exact", "icontains"]
     }
 

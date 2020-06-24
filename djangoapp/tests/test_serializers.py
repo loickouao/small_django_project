@@ -1,13 +1,12 @@
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
 from rest_framework import status
-from djangoapp.serializers import StockRepresentationModelSerializer, StockModelSerializer, PriceRepresentationModelSerializer, PriceModelSerializer, NbPriceStockModelSerializer
+from djangoapp.serializers import (
+    StockRepresentationModelSerializer, StockModelSerializer, PriceRepresentationModelSerializer, PriceModelSerializer, NbPriceStockModelSerializer, MultiplyPricesActionButtonSerializer)
 from django.urls import reverse
 import pytest
 import json
 from bridger.serializers import AdditionalResourcesField, HyperlinkField 
-
-from django.contrib.auth import get_user_model
 
 @pytest.mark.django_db
 class TestStockRepresentationModelSerializer:
@@ -43,6 +42,30 @@ class TestStockModelSerializer:
         assert ressource.get("prices") is not None
         assert ressource.get("modifyprices") is not None
         assert ressource.get("chartprices") is not None
+
+    def test_StockModelSerializerViewset(self, admin_client, stock_factory):
+        """Tests POST method with valid data to create a stock instance."""
+        stock = stock_factory()
+        factory = APIRequestFactory()
+        request = factory.get('')
+        #user = get_user_model().objects.create(username='some_user', is_superuser=True, is_active=True)
+        #request.user = user
+        #context = {'request': request}
+        context = {'request': Request(request)}
+        stock_serializer = StockModelSerializer(stock, context = context)
+
+        response = admin_client.post(reverse('djangoapp:stock-list'),
+                            json.dumps(stock_serializer.data),
+                            content_type='application/json')
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert set(response.json().get('instance').keys()) == set(["id", "symbol", "prices", "_additional_resources"])
+        assert response.json().get('instance').get('id') == stock.id + 1  == stock_serializer.data.get('id') + 1 #Method POST create new object
+        assert response.json().get('instance').get('symbol') == stock.symbol == stock_serializer.data.get('symbol')
+        assert len(response.json().get('instance').get('prices')) == stock.prices.count() == len(stock_serializer.data.get('prices'))
+        assert set(response.json().get('instance').get('_additional_resources')) == set(stock_serializer.data.get('_additional_resources')) 
+    
+        
 
 @pytest.mark.django_db
 class TestPriceRepresentationModelSerializer:
@@ -92,11 +115,18 @@ class TestNbPriceStockModelSerializer:
         assert serializer_data.get('symbol') is not None
         assert serializer_data.get('nb_prices') is None
         assert serializer_data.get('nb_prices_today') is None
+        assert len(serializer_data.get('prices')) == 0
+        assert len(serializer_data.get('_prices')) == 0
 
-        price = price_factory(stock=stock)
-        assert price
-        factory = APIRequestFactory()
-        request = factory.get("")
-        assert Request(request).data == "loic"
+        price_factory(stock=stock)
+        serializer_data = NbPriceStockModelSerializer(stock).data
+        assert serializer_data.get('nb_prices') is None
+        assert serializer_data.get('nb_prices_today') is None
+        assert len(serializer_data.get('prices')) == 1
+        assert len(serializer_data.get('_prices')) == 1
 
-        assert serializer_data.get('nb_prices') is not None       
+
+class TestMultiplyPricesActionButtonSerializer:
+    def test_fields(self):
+        serializer_data = MultiplyPricesActionButtonSerializer().data
+        assert set(serializer_data.keys()) == set(['number_product'])

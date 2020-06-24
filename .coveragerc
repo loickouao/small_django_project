@@ -1,2 +1,11 @@
+[report]
+exclude_lines = 
+
 [run]
 omit = djangoapp/migrations/*
+    djangoproject/*
+    manage.py
+    djangoapp/icons.py
+    djangoapp/apps.py
+
+    

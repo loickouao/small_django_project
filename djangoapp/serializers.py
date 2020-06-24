@@ -72,3 +72,8 @@ class NbPriceStockModelSerializer(wb_serializers.ModelSerializer):
         model = Stock
         fields = ('id',"symbol", "prices", "_prices",  "nb_prices", "nb_prices_today")
         #fields = ('id', "symbol", "nb_prices", "nb_prices_today")
+
+class MultiplyPricesActionButtonSerializer(wb_serializers.Serializer):
+        number_product = wb_serializers.FloatField(label="Multiply by", default=2)
+        class Meta:
+            fields = ("number_product")

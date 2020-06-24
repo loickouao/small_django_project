@@ -79,7 +79,7 @@ class TestPriceModel:
         assert price0.pk is not None
         assert price0.stock.pk is not None
         assert price0.date == date
-        assert price0.datetime.strftime("%Y-%m-%d %H:%M:%S") == datetime.strftime("%Y-%m-%d %H:%M:%S")
+        assert price0.datetime.strftime("%Y-%m-%dT%H:%M:%S%z") == datetime.strftime("%Y-%m-%dT%H:%M:%S%z")
         
 
         assert price.stock == stock
