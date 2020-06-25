@@ -43,8 +43,11 @@ class StockRepresentationModelViewSet(viewsets.RepresentationModelViewSet):
     serializer_class = StockRepresentationModelSerializer
 
 
+
 class StockModelViewSet(viewsets.ModelViewSet):
+    DELETE_ENDPOINT = None
     ENDPOINT = 'djangoapp:stock-list'
+
     IDENTIFIER = "djangoapp:stock"
     INSTANCE_TITLE = "Stock : {{symbol}}"
     LIST_TITLE = "Stocks"
@@ -101,7 +104,7 @@ class StockModelViewSet(viewsets.ModelViewSet):
         ])
     ]
 
-    @action(methods = ["GET", "PATCH"], permission_classes = [IsAuthenticated], detail=True)
+    @action(methods = ["PATCH"], permission_classes = [IsAuthenticated], detail=True)
     def modifyprices(self, request, pk = None):
         number_product = float(request.POST.get("number_product", 1))
         nbprice = Price.objects.filter(stock__id=pk).update(price=F('price') * number_product)
@@ -222,6 +225,7 @@ class PriceStockModelViewSet(PriceModelViewSet):
 
 
 class PriceStockChartViewSet(ChartViewSet):
+    ENDPOINT = 'djangoapp:stock-chartprices-list'
     IDENTIFIER = 'djangoapp:price' 
     queryset = Price.objects.all()
     
@@ -289,7 +293,7 @@ class PriceStockChartViewSet(ChartViewSet):
 
 class PricePandasModelViewSet(PandasAPIView):
     ENDPOINT = 'djangoapp:price-list'
-    ENDPOINT = None
+    #ENDPOINT = None
     IDENTIFIER = 'djangoapp:price' 
     #LIST_ENDPOINT = 'djangoapp:pricelist-list'
     metadata_class = PandasMetadata

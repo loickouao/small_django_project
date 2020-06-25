@@ -5,7 +5,7 @@ from rest_framework import status
 import pytest
 from django.utils import timezone
 from rest_framework.test import APIRequestFactory
-from djangoapp.views import StockRepresentationModelViewSet, StockModelViewSet, PriceRepresentationModelViewSet, PriceModelViewSet, PriceStockModelViewSet
+from djangoapp.views import StockRepresentationModelViewSet, StockModelViewSet, PriceRepresentationModelViewSet, PriceModelViewSet, PriceStockModelViewSet, PriceStockChartViewSet, PricePandasModelViewSet
 from djangoapp.serializers import MultiplyPricesActionButtonSerializer
 from django.contrib.auth import get_user_model
 import json
@@ -222,11 +222,19 @@ class TestPriceStockModelViewSet:
         request.user = self.get_user()
         viewset = PriceStockModelViewSet(kwargs={"stock_id": stock.pk})
         # print(viewset._get_endpoint(request))
+        # print(viewset._get_endpoints(request))
         response = admin_client.get(viewset._get_endpoint(request))
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data.get('results') is not None
-        
+
+    def test_get_list_title(self, stock_factory):
+        stock = stock_factory()
+        request = APIRequestFactory().get("")
+        vs = PriceStockModelViewSet(kwargs={"stock_id": stock.pk})
+        assert vs.get_list_title(request) == "Prices for " + str(stock)
+
+
     def test_aggregation(self, admin_client, stock_factory, price_factory):
         stock = stock_factory()
         for i in range(2):
@@ -240,3 +248,56 @@ class TestPriceStockModelViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.data.get("aggregates").get('stock').get('#') == '2.00'
 
+@pytest.mark.django_db      
+class TestPriceStockChartViewSet:
+    def get_user(self):
+        superuser = get_user_model().objects.create(
+            username="test_user", password="ABC", is_active=True, is_superuser=True
+        )
+        return superuser
+    def test_as_view_list(self, admin_client, stock_factory, price_factory):
+        stock = stock_factory()
+        for i in range(20):
+            price_factory(stock = stock)
+        request = APIRequestFactory().get("")
+        request.user = self.get_user() 
+        vs = PriceStockChartViewSet(kwargs={"stock_id": stock.pk})
+
+        if hasattr(vs, "ENDPOINT"):
+            print(reverse(vs.ENDPOINT , args=[stock.pk]))
+            response = admin_client.get(reverse(vs.ENDPOINT , args=[stock.pk]) )
+        else:
+            response = admin_client.get(vs._get_endpoint(request))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data
+
+    def test_get_list_title(self, stock_factory):
+        stock = stock_factory()
+        request = APIRequestFactory().get("")
+        vs = PriceStockChartViewSet(kwargs={"stock_id": stock.pk})
+        assert vs.get_list_title(request) == "Model Chart - Prices for " + str(stock)
+
+
+@pytest.mark.django_db      
+class TestPricePandasModelViewSet:
+    def get_user(self):
+        superuser = get_user_model().objects.create(
+            username="test_user", password="ABC", is_active=True, is_superuser=True
+        )
+        return superuser
+    
+    def test_aggregation(self, admin_client, stock_factory, price_factory):
+        for i in range(2):
+            price_factory(stock = stock_factory())
+        request = APIRequestFactory().get("")
+        request.user = self.get_user()
+        vs = PricePandasModelViewSet()
+        if hasattr(vs, "ENDPOINT"):
+            print(reverse(vs.ENDPOINT))
+            response = admin_client.get(reverse(vs.ENDPOINT))
+        else:
+            response = admin_client.get(vs._get_endpoint(request))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data.get("aggregates").get('stock').get('#') == '2.00'
