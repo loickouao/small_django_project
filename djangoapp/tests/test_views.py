@@ -156,16 +156,18 @@ class TestPriceViewsets:
         )
         return superuser
 
-    def test_metadata_list(self, stock_factory, price_factory):
+    def test_metadata_list(self, admin_client, stock_factory, price_factory):
         for i in range(2):
             price_factory(stock = stock_factory())
         
         request = APIRequestFactory().get("")
         request.user = self.get_user()
-        vs = PriceModelViewSet.as_view({"get": "list"})
-        response = vs(request)
+        viewset = PriceModelViewSet()
+        response = admin_client.get(viewset._get_endpoint(request))
+        # vs = PriceModelViewSet.as_view({"get": "list"})
+        # response = vs(request)
         assert response.status_code == status.HTTP_200_OK
-        assert response.data 
+        # assert response.data 
         assert len(response.data.get('results') ) == 2
 
     def test_metadata_instance(self, stock_factory, price_factory):
@@ -212,18 +214,29 @@ class TestPriceStockModelViewSet:
             username="test_user", password="ABC", is_active=True, is_superuser=True
         )
         return superuser
-
-    def test_get_list_title(self, admin_client, stock_factory, price_factory):
-        stocks = []
-        for i in range(2):
-            stocks.append(stock_factory())
-            price_factory(stock = stocks[i])
+    
+    def test_metadata_list(self, admin_client, stock_factory, price_factory):
+        stock = stock_factory()
+        price_factory(stock = stock)
         request = APIRequestFactory().get("")
         request.user = self.get_user()
-        vs = PriceStockModelViewSet.as_view({"get": "retrieve"}, args=[stocks[0].pk])
-        response = vs(request)
-        # print(response.data)
-        # assert response.status_code == status.HTTP_200_OK
-        # assert response.data.get("aggregates") is not None
+        viewset = PriceStockModelViewSet(kwargs={"stock_id": stock.pk})
+        # print(viewset._get_endpoint(request))
+        response = admin_client.get(viewset._get_endpoint(request))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data.get('results') is not None
         
+    def test_aggregation(self, admin_client, stock_factory, price_factory):
+        stock = stock_factory()
+        for i in range(2):
+            price_factory(stock = stock)
+            price_factory(stock = stock_factory())
+        request = APIRequestFactory().get("")
+        request.user = self.get_user()      
+
+        vs = PriceStockModelViewSet(kwargs={"stock_id": stock.pk})
+        response = admin_client.get(vs._get_endpoint(request))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data.get("aggregates").get('stock').get('#') == '2.00'
 

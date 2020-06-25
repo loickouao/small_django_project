@@ -210,7 +210,9 @@ class PriceStockModelViewSet(PriceModelViewSet):
             dp.Field(key="datetime", label="Datetime"),
         ],  
     )
-    
+    def get_endpoint(self, request, endpoint=None):
+        return "djangoapp:stock-prices-list", [self.kwargs["stock_id"]], {}
+
     def get_list_title(self, request, field=None):
         stock = Stock.objects.get(id=self.kwargs["stock_id"])
         return f'Prices for {stock.symbol}'
@@ -286,7 +288,7 @@ class PriceStockChartViewSet(ChartViewSet):
 
 
 class PricePandasModelViewSet(PandasAPIView):
-    #ENDPOINT = 'djangoapp:price-list'
+    ENDPOINT = 'djangoapp:price-list'
     ENDPOINT = None
     IDENTIFIER = 'djangoapp:price' 
     #LIST_ENDPOINT = 'djangoapp:pricelist-list'
