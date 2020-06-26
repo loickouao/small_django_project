@@ -1,5 +1,9 @@
 [report]
 exclude_lines = 
+    def api_endpoints_root
+    print()
+    if hasattr
+    response = admin_client.get(reverse(vs.ENDPOINT , args=[stock.pk]) ) 
 
 [run]
 omit = djangoapp/migrations/*

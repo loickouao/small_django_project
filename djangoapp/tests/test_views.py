@@ -5,10 +5,14 @@ from rest_framework import status
 import pytest
 from django.utils import timezone
 from rest_framework.test import APIRequestFactory
-from djangoapp.views import StockRepresentationModelViewSet, StockModelViewSet, PriceRepresentationModelViewSet, PriceModelViewSet, PriceStockModelViewSet, PriceStockChartViewSet, PricePandasModelViewSet
+from djangoapp.views import (
+    StockRepresentationModelViewSet, StockModelViewSet, PriceRepresentationModelViewSet, PriceModelViewSet, PriceStockModelViewSet, PriceStockChartViewSet, PricePandasModelViewSet, NbPriceStockModelViewSet )
 from djangoapp.serializers import MultiplyPricesActionButtonSerializer
 from django.contrib.auth import get_user_model
 import json
+from djangoapp.models import Price
+import pandas as pd
+from bridger.notifications.models import Notification, NotificationSendType
 
 @pytest.mark.django_db      
 class TestStockRepresentationViewsets:
@@ -92,8 +96,9 @@ class TestStockViewsets:
         assert response.data.get("aggregates").get('symbol').get('#') == '2.00'
 
 
-    def test_modifyprices(self, admin_client, stock_factory):
+    def test_modifyprices(self, admin_client, stock_factory, price_factory):
         stock = stock_factory()
+        price_factory(stock = stock)
         request = APIRequestFactory().get('')
         print(request.POST)
         context = {'request': Request(request)}
@@ -111,7 +116,8 @@ class TestStockViewsets:
         response = admin_client.patch(reverse('djangoapp:stock-modifyprices', args=[stock.pk]), data = json.dumps(serializers.data), content_type ='application/json' ) 
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.json().get('__notification').get('updated') is True
+        assert response.json().get('__notification').get('updated') 
+
 
 @pytest.mark.django_db      
 class TestPriceRepresentationViewsets:
@@ -242,9 +248,15 @@ class TestPriceStockModelViewSet:
             price_factory(stock = stock_factory())
         request = APIRequestFactory().get("")
         request.user = self.get_user()      
-
+        
         vs = PriceStockModelViewSet(kwargs={"stock_id": stock.pk})
-        response = admin_client.get(vs._get_endpoint(request))
+        if hasattr(vs, "get_endpoint"):
+            response = admin_client.get(vs._get_endpoint(request))
+        elif hasattr(vs, "ENDPOINT"):
+            response = admin_client.get(reverse(vs.ENDPOINT , args=[stock.pk]) )
+        else:
+            print("Error not found the endpoint")
+
         assert response.status_code == status.HTTP_200_OK
         assert response.data.get("aggregates").get('stock').get('#') == '2.00'
 
@@ -263,12 +275,13 @@ class TestPriceStockChartViewSet:
         request.user = self.get_user() 
         vs = PriceStockChartViewSet(kwargs={"stock_id": stock.pk})
 
-        if hasattr(vs, "ENDPOINT"):
-            print(reverse(vs.ENDPOINT , args=[stock.pk]))
+        if hasattr(vs, "get_endpoint"):
+            response = admin_client.get(vs._get_endpoint(request))
+        elif hasattr(vs, "ENDPOINT"):
             response = admin_client.get(reverse(vs.ENDPOINT , args=[stock.pk]) )
         else:
-            response = admin_client.get(vs._get_endpoint(request))
-
+            print("Error not found the endpoint")
+            
         assert response.status_code == status.HTTP_200_OK
         assert response.data
 
@@ -293,11 +306,30 @@ class TestPricePandasModelViewSet:
         request = APIRequestFactory().get("")
         request.user = self.get_user()
         vs = PricePandasModelViewSet()
-        if hasattr(vs, "ENDPOINT"):
-            print(reverse(vs.ENDPOINT))
-            response = admin_client.get(reverse(vs.ENDPOINT))
-        else:
-            response = admin_client.get(vs._get_endpoint(request))
+        df = pd.DataFrame(
+            Price.objects.all()
+        )
+        assert vs.get_aggregates(request, df).get('stock').get('#') == '2.00'
 
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data.get("aggregates").get('stock').get('#') == '2.00'
+
+@pytest.mark.django_db      
+class TestNbPriceStockModelViewSet:
+    def get_user(self):
+        superuser = get_user_model().objects.create(
+            username="test_user", password="ABC", is_active=True, is_superuser=True
+        )
+        return superuser 
+
+    def test_metadata_list(self, admin_client, stock_factory, price_factory):
+        stock =  stock_factory(symbol="BABA")
+        for i in range(2):
+            price_factory(stock = stock)
+            price_factory(stock =  stock_factory() )
+        request = APIRequestFactory().get("")
+        request.user = self.get_user()
+        vs = NbPriceStockModelViewSet()
+
+        assert vs.get_queryset().filter(nb_prices_today = None).count() == 0
+        assert vs.get_queryset().filter(nb_prices = None).count() == 0
+
+        assert set(vs.get_aggregates(vs.get_queryset()).keys()) == set(['symbol', 'nb_prices', 'nb_prices_today'])
