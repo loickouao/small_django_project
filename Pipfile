@@ -23,6 +23,7 @@ djangorestframework-simplejwt = "*"
 django-extensions = "*"
 django-cors-headers = "*"
 django-filter = "*"
+requests-mock = "*"
 
 [scripts]
 test = "pytest"

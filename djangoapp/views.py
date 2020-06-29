@@ -249,45 +249,49 @@ class PriceStockChartViewSet(ChartViewSet):
         df = pd.DataFrame(
             queryset.order_by("datetime").values("datetime", "price")
         )
-        fig = go.Figure(
-            [
-                go.Scatter(
-                    x = df.datetime,
-                    y = df.price,  
-                    #mode='lines+markers',
-                    #fill='tozeroy',
-                    #line = dict(width=1),
-                )
-            ]
-        )
-        fig.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            yaxis=dict(
-                title="Prices",
-                titlefont=dict(color="#000000"),
-                tickfont=dict(color="#000000"),
-                anchor="x",
-                side="right",
-                showline=True,
-                linewidth=1,
-                linecolor="black",
-            ),
-            yaxis_type="log",
-            xaxis=dict(
-                title="Datetime",
-                titlefont=dict(color="#000000"),
-                tickfont=dict(color="#000000"),
-                showline=True,
-                linewidth=0.5,
-                linecolor="black",
-                showgrid=True,
-                gridcolor="lightgray",
-                gridwidth=1,
-            ),
-            autosize=True,
-            xaxis_rangeslider_visible=True,
-        )
+        if df.empty:  
+            print("df empty")
+            fig = go.Figure([go.Scatter()])
+        else:
+            fig = go.Figure(
+                [
+                    go.Scatter(
+                        x = df.datetime,
+                        y = df.price,  
+                        #mode='lines+markers',
+                        #fill='tozeroy',
+                        #line = dict(width=1),
+                    )
+                ]
+            )
+            fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                yaxis=dict(
+                    title="Prices",
+                    titlefont=dict(color="#000000"),
+                    tickfont=dict(color="#000000"),
+                    anchor="x",
+                    side="right",
+                    showline=True,
+                    linewidth=1,
+                    linecolor="black",
+                ),
+                yaxis_type="log",
+                xaxis=dict(
+                    title="Datetime",
+                    titlefont=dict(color="#000000"),
+                    tickfont=dict(color="#000000"),
+                    showline=True,
+                    linewidth=0.5,
+                    linecolor="black",
+                    showgrid=True,
+                    gridcolor="lightgray",
+                    gridwidth=1,
+                ),
+                autosize=True,
+                xaxis_rangeslider_visible=True,
+            )
         return fig
 
 
@@ -365,7 +369,7 @@ class NbPriceStockModelViewSet(viewsets.ModelViewSet):
     }
 
     def get_queryset(self):
-        date = timezone.now().date() - timedelta(days=1)
+        #date = timezone.now().date() - timedelta(days=1)
         today = timezone.now().date()
         return Stock.objects.annotate(
             nb_prices = Count(F("prices")),
