@@ -15,12 +15,9 @@ print('task ok')
 
 
 @shared_task
-def get_global_quote(namestock, test_msg_api = None, API_KEY = config('DO_ACCESS_APIKEY')):   
-    if test_msg_api:
-        price_response = test_msg_api
-        print(price_response)
+def get_global_quote(namestock, price_response = None, user= None, API_KEY = config('DO_ACCESS_APIKEY')):   
+    if not(price_response):
 
-    else:
         if not API_KEY:
             raise Exception("Couldn't find DO_ACCESS_APIKEY environment variable!")
     
@@ -28,12 +25,12 @@ def get_global_quote(namestock, test_msg_api = None, API_KEY = config('DO_ACCESS
 
         price_response = requests.get('https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='+namestock+'&apikey='+API_KEY)
     data = price_response.json()
-            
+        
+    users = get_user_model().objects.all()
 
     #{'Error Message': 'Invalid API call. Please retry or visit the documentation (https://www.alphavantage.co/documentation/) for GLOBAL_QUOTE.'}
     if data.get('Error Message'):
         msg = f'Unknow Stock: {namestock} in the api AlphaVantage'
-        print(msg)
         users = get_user_model().objects.all()
         for user in users:
             notif = Notification.objects.create(
@@ -46,6 +43,7 @@ def get_global_quote(namestock, test_msg_api = None, API_KEY = config('DO_ACCESS
         DB = data.get('Global Quote')
         if DB :
             querystock = Stock.objects.all().filter(symbol = namestock)
+
             if querystock:
                 response_stock = "Stock already exists in the database"
                 insertstock = querystock[0]
@@ -55,12 +53,10 @@ def get_global_quote(namestock, test_msg_api = None, API_KEY = config('DO_ACCESS
                 response_stock = "New Stock added to the database"
             print(namestock+": "+ response_stock)
         
-
             datetrading = DB.get('07. latest trading day')
             dateprice = Price.objects.all().filter(date = datetrading, stock = insertstock)
-            if dateprice:
-                response_price = "Price already added"
-            else:
+            response_price = "Price already added"
+            if not(dateprice):
                 insertprice = Price(open_price = DB.get('02. open'),
                 high_price = DB.get('03. high'),
                 low_price =  DB.get('04. low'),
@@ -73,25 +69,25 @@ def get_global_quote(namestock, test_msg_api = None, API_KEY = config('DO_ACCESS
             print(datetrading+": "+ response_price)              
 
             msg = f'{namestock}": {response_stock} \n {datetrading}": {response_price} '
+            for user in users:
+                notif = Notification.objects.create(
+                    title = f'get_global_quote Stock: {namestock}',
+                    message = msg,
+                    send_type = NotificationSendType.SYSTEM.value,
+                    recipient = user,
+                    endpoint = reverse("djangoapp:stock-detail", args=[insertstock.pk])
+                )
         else:
             note = data.get('Note')
             msg = f'{note}'
-
-        superuser = get_user_model().objects.create(
-            username="test_user2", password="ABC", is_active=True, is_superuser=True
-        )
-        users = get_user_model().objects.all()
-        
-        print(users)
-        for user in users:
-            notif = Notification.objects.create(
-                title = f'get_global_quote Stock: {namestock}',
-                message = msg,
-                send_type = NotificationSendType.SYSTEM.value,
-                recipient = user,
-                endpoint = reverse("djangoapp:stock-detail", args=[insertstock.pk])
-            )
-    print(notif)
+    
+            for user in users:
+                notif = Notification.objects.create(
+                    title = f'get_global_quote Stock: {namestock}',
+                    message = msg,
+                    send_type = NotificationSendType.SYSTEM.value,
+                    recipient = user,
+                )
     return notif
 
 

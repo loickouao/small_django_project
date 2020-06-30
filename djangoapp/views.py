@@ -249,10 +249,8 @@ class PriceStockChartViewSet(ChartViewSet):
         df = pd.DataFrame(
             queryset.order_by("datetime").values("datetime", "price")
         )
-        if df.empty:  
-            print("df empty")
-            fig = go.Figure([go.Scatter()])
-        else:
+        fig = go.Figure([go.Scatter()])
+        if not(df.empty):  
             fig = go.Figure(
                 [
                     go.Scatter(

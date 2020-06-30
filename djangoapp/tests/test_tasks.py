@@ -4,54 +4,18 @@ from unittest.mock import patch
 from djangoapp.models import Stock, Price
 from bridger.notifications.models import Notification, NotificationSendType
 from django.contrib.auth import get_user_model
+import json
+from decouple import config
 
-# import requests
-# import requests_mock
+import requests
 
-# @requests_mock.Mocker()
-# def mock_request_api(m, stock, price):
-#     if price:
-#         msg_api = {
-#             "Global Quote": {
-#                 "01. symbol": stock.symbol,
-#                 "02. open": price.open_price,
-#                 "03. high": price.high_price,
-#                 "04. low": price.low_price,
-#                 "05. price": price.price,
-#                 "06. volume": price.volume,
-#                 "07. latest trading day": price.date,
-#             }
-#         }
-#     else:
-#         msg_api = {
-#             "Error Message": "Invalid API call. Please retry or visit the documentation (https://www.alphavantage.co/documentation/) for GLOBAL_QUOTE."
-#         }
-#     m.get('http://test-alphavantage.ch', text=msg_api)
-#     return requests.get('http://test-alphavantage.ch').text
-
-# def mock_request_api2(stock, price):
-#     if price:
-#         msg_api = {
-#             "Global Quote": {
-#                 "01. symbol": stock.symbol,
-#                 "02. open": price.open_price,
-#                 "03. high": price.high_price,
-#                 "04. low": price.low_price,
-#                 "05. price": price.price,
-#                 "06. volume": price.volume,
-#                 "07. latest trading day": price.date,
-#             }
-#         }
-#     else:
-#         msg_api = {
-#             "Error Message": "Invalid API call. Please retry or visit the documentation (https://www.alphavantage.co/documentation/) for GLOBAL_QUOTE."
-#         }
-#     with requests_mock.Mocker() as m:
-#         m.get('http://test-alphavantage.ch', text=msg_api)
-#         return requests.get('http://test-alphavantage.ch').text
-
-
-
+def get_mock_stock(namestock, result = None, API_KEY = config('DO_ACCESS_APIKEY')):
+    USERS_URL = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='+namestock+'&apikey='+API_KEY
+    """Get list of users"""
+    response = requests.get(USERS_URL)
+    if response.ok:
+        result = response
+    return result
 
 @pytest.mark.django_db
 class Test_global_quote:
@@ -61,7 +25,28 @@ class Test_global_quote:
         )
         return superuser
 
-    
+    @patch('requests.get') 
+    def testMock_request_response(self, mock_get):
+        data = {'Note': 'Thank you for using Alpha Vantage! Our standard API call frequency is 5 calls per minute and 500 calls per day. Please visit https://www.alphavantage.co/premium/ if you would like to target a higher API call frequency.'}
+
+        mock_get.return_value.status_code = 200 # Mock status code of response.
+        mock_get.return_value.json.return_value = data
+        response = get_mock_stock("IBM")
+
+        # Assert that the request-response cycle completed successfully with status code 200.
+        assert response.status_code == 200
+        assert response.json() == data
+
+        user = self.get_user()
+        notif = get_global_quote("BABA", price_response=response, user=user )
+        notification = Notification.objects.create(
+            recipient = user,
+            title = f'get_global_quote Stock: BABA',
+            message = "You have a new notification",
+        )
+        assert str(notif) == str(notification) 
+
+   
     def test_notification(self, stock_factory, price_factory):
         stock = stock_factory(symbol="IBM")
         stock2 = stock_factory()
@@ -69,10 +54,12 @@ class Test_global_quote:
         # msg_api = mock_request_api2(stock, price)
 
         # notification = get_global_quote(stock.symbol, test_msg_api = msg_api)
-        notif = get_global_quote(stock.symbol)
-        notif2 = get_global_quote(stock2.symbol)
-
         user = self.get_user()
+        notif = get_global_quote(stock.symbol, user=user)
+        notif2 = get_global_quote(stock2.symbol, user=user)
+
+        get_global_quote("BABA", user=user)
+        
         patch("celery.execute.send_task")
         notification = Notification.objects.create(
             recipient = user,
@@ -84,9 +71,8 @@ class Test_global_quote:
             title = f'get_global_quote Stock: {stock2.symbol}',
             message = "You have a new notification",
         )
-        assert notif.title == notification.title 
-        assert notif2.title == notification2.title 
-
+        assert str(notif) == str(notification) 
+        assert str(notif2) == str(notification2) 
 
 
 
