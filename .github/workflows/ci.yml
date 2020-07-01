@@ -20,6 +20,7 @@ jobs:
       with:
         python-version: 3.8.2
     - name: Install pipenv
+      uses: dschep/install-pipenv-action@v1
     - uses: actions/cache@v1
       id : cache
       with:
