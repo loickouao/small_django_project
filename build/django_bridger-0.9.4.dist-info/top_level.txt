@@ -1,2 +1,0 @@
-bridger
-tests2

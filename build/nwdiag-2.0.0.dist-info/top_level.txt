@@ -1,6 +1,0 @@
-nwdiag
-nwdiag_sphinxhelper
-packetdiag
-packetdiag_sphinxhelper
-rackdiag
-rackdiag_sphinxhelper
