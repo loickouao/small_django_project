@@ -3,7 +3,6 @@ import requests
 from celery import shared_task
 
 # import threading
-from decouple import config
 from bridger.notifications.models import Notification, NotificationSendType
 from django.contrib.auth import get_user_model
 from rest_framework.reverse import reverse
@@ -15,10 +14,10 @@ print('task ok')
 
 
 @shared_task
-def get_global_quote(namestock, price_response = None, user= None, API_KEY = config('DO_ACCESS_APIKEY', "PPWQELG16ZFKXEP1")):   
+def get_global_quote(namestock, price_response = None, user= None, API_KEY = settings.DO_ACCESS_APIKEY):   
     if not(price_response):
 
-        if not API_KEY:
+        if API_KEY == None:
             raise Exception("Couldn't find DO_ACCESS_APIKEY environment variable!")
     
         #data: {'Note': 'Thank you for using Alpha Vantage! Our standard API call frequency is 5 calls per minute and 500 calls per day. Please visit https://www.alphavantage.co/premium/ if you would like to target a higher API call frequency.'}

@@ -248,3 +248,4 @@ SIMPLE_JWT = {
     "AUDIENCE": None,
     "ISSUER": None,
 }
+DO_ACCESS_APIKEY= config("DO_ACCESS_APIKEY", "")
