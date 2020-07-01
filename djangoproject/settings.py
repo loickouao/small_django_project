@@ -215,9 +215,9 @@ CELERY_IMPORTS = ['djangoapp.tasks',]
 
 
 
-CDN_BASE_ENDPOINT_URL = config("CDN_BASE_ENDPOINT_URL")
-BASE_ENDPOINT_URL = config("BASE_ENDPOINT_URL")
-FRONTEND_VERSION = config("FRONTEND_VERSION")
+CDN_BASE_ENDPOINT_URL = config("CDN_BASE_ENDPOINT_URL", "")
+BASE_ENDPOINT_URL = config("BASE_ENDPOINT_URL", "")
+FRONTEND_VERSION = config("FRONTEND_VERSION", "")
 def auth_method(request):
     return {
         "type": "JWT",
