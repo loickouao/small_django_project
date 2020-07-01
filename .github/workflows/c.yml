@@ -9,7 +9,7 @@ jobs:
         env:
           POSTGRES_USER: root
           POSTGRES_PASSWORD: root
-          POSTGRES_DB: project-db
+          POSTGRES_DB: stainly-pipy
         ports:
         - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
@@ -22,24 +22,21 @@ jobs:
     - name: Install pipenv
       uses: dschep/install-pipenv-action@v1
     - uses: actions/cache@v1
-      id : cache
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile') }}
         restore-keys: |
           ${{ runner.os }}-pip-
     - name: Install dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        pipenv lock --dev --requirements > requirements.txt
-        pip install -r requirements.txt
+        pipenv install --dev
     - name: Testing
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        # pipenv run pytest -v --cache-clear */tests/
-        pytest -v --cache-clear */tests/
+        pipenv run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=*/migrations/*,.git,__pycache__,*/lib/*
+        pipenv run pytest -v --cache-clear
       env:
-        DATABASE_URL: postgres://root:root@localhost:5432/project-db
+        DATABASE_URL: postgres://root:root@localhost:5432/stainly-pipy
     - uses: codecov/codecov-action@v1
       with:
         name: Uploading Coverage Report to Codecov
