@@ -19,19 +19,32 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8.2
+    # - name: Install pipenv
+    #   uses: dschep/install-pipenv-action@v1
+    # - uses: actions/cache@v1
+    #   id:   cache
+    #   with:
+    #     path: ~/.cache/pip
+    #     key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-pip-
     - name: Install pipenv
       uses: dschep/install-pipenv-action@v1
-    - uses: actions/cache@v1
-      id:   cache
-      with:
-        path: ~/.pipenv
-        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile') }}
-        restore-keys: |
-          ${{ runner.os }}-pipenv-
-    - name: Install dependencies
+    - name: Export PipFile.lock into requirements.txt
       run: |
-        pipenv install --dev
-      if: steps.pipenv.outputs.cache-hit != 'true'
+        pipenv lock --dev --requirements > requirements.txt
+    - uses: actions/cache@v1
+      id: cache
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        pip install -r requirements.txt 
+      # pipenv install --dev
     - name: Testing
       run: |
         # stop the build if there are Python syntax errors or undefined names
