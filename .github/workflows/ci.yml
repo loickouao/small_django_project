@@ -23,21 +23,21 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       uses: dschep/install-pipenv-action@v1
     - uses: actions/cache@v1
-      id : cache-venv
+      id : cache
       with:
-        path: ./.venv/  # what we cache: the virtualenv
-        key: ${{ runner.os }}-venv-${{ hashFiles('**/Pipfile') }}
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile') }}
         restore-keys: |
-          ${{ runner.os }}-venv-
+          ${{ runner.os }}-pip-
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        pipenv lock -r | sed 's/-e //g' | pipenv run pip install --upgrade -r /dev/stdin --target ./.venv
+        pipenv install --dev
     - name: Testing
       run: |
         # stop the build if there are Python syntax errors or undefined names
         # pipenv run pytest -v --cache-clear */tests/
-        . ./.venv/bin/activate
+        pipenv shell 
         pytest -v */tests/
       env:
         DATABASE_URL: postgres://root:root@localhost:5432/project-db
