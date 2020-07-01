@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        pipenv lock -r | sed 's/-e //g' | pipenv run pip install --upgrade -r /dev/stdin --target venv
+        pipenv lock -r | sed 's/-e //g' | pipenv run pip install --upgrade -r /dev/stdin --target ./.venv
     - name: Testing
       run: |
         # stop the build if there are Python syntax errors or undefined names
