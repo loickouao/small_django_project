@@ -15,7 +15,7 @@ print('task ok')
 
 
 @shared_task
-def get_global_quote(namestock, price_response = None, user= None, API_KEY = config('DO_ACCESS_APIKEY', "")):   
+def get_global_quote(namestock, price_response = None, user= None, API_KEY = config('DO_ACCESS_APIKEY', "PPWQELG16ZFKXEP1")):   
     if not(price_response):
 
         if not API_KEY:
