@@ -9,7 +9,7 @@ from decouple import config
 
 import requests
 
-def get_mock_stock(namestock, result = None, API_KEY = config('DO_ACCESS_APIKEY', "")):
+def get_mock_stock(namestock, result = None, API_KEY = config('DO_ACCESS_APIKEY', "fausse_cle")):
     USERS_URL = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='+namestock+'&apikey='+API_KEY
     """Get list of users"""
     response = requests.get(USERS_URL)
