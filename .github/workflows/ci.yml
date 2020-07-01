@@ -41,6 +41,8 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
         pipenv install --dev
+        pipenv lock --dev --requirements > requirements.txt
+        pip install -r requirements.txt
     - name: Testing
       run: |
         # stop the build if there are Python syntax errors or undefined names
