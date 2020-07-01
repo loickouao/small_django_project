@@ -22,6 +22,7 @@ jobs:
     - name: Install pipenv
       uses: dschep/install-pipenv-action@v1
     - uses: actions/cache@v1
+      id:   cache
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile') }}
@@ -33,7 +34,7 @@ jobs:
     - name: Testing
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        pipenv run pytest -v --cache-clear djangoapp/tests/
+        pipenv run pytest -v --cache-clear */tests/
       env:
         DATABASE_URL: postgres://root:root@localhost:5432/project-db
     - uses: codecov/codecov-action@v1
