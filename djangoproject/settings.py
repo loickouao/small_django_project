@@ -47,7 +47,6 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "django_extensions",
     'django_celery_beat',
-    "corsheaders",
     'djangoapp',
 ]
 
@@ -62,7 +61,6 @@ WB_ENDPOINTS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
