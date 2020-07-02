@@ -15,8 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, reverse_lazy
-from django.views.generic import RedirectView
 
+from django.views.generic import RedirectView
 from bridger.frontend import FrontendView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
