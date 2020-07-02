@@ -26,19 +26,20 @@ jobs:
       id : cache
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/Pipfile') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        pipenv install --dev
+        pipenv lock --requirements > requirements.txt
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
     - name: Testing
       run: |
         # stop the build if there are Python syntax errors or undefined names
         # pipenv run pytest -v --cache-clear */tests/
-        pipenv shell 
-        pytest -v */tests/
+        pytest -v --cache-clear */tests/
       env:
         DATABASE_URL: postgres://root:root@localhost:5432/project-db
     - uses: codecov/codecov-action@v1
