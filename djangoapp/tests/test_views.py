@@ -300,7 +300,7 @@ class TestPricePandasModelViewSet:
         )
         return superuser
     
-    def test_aggregation(self, admin_client, stock_factory, price_factory):
+    def test_aggregation(self, stock_factory, price_factory):
         for i in range(2):
             price_factory(stock = stock_factory())
         request = APIRequestFactory().get("")
@@ -320,7 +320,7 @@ class TestNbPriceStockModelViewSet:
         )
         return superuser 
 
-    def test_metadata_list(self, admin_client, stock_factory, price_factory):
+    def test_metadata_list(self, stock_factory, price_factory):
         stock =  stock_factory(symbol="BABA")
         for i in range(2):
             price_factory(stock = stock)
