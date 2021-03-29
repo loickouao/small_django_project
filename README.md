@@ -1,7 +1,6 @@
 # small_django_project
 
 A small Django-Rest Project, that allows to store data for selected stocks.
-This should be uploaded to a public GitHub Repository.
 
 ### Models:
   - Store stocks in a database (Hint: Models → Stock)
